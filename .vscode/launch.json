@@ -2,15 +2,15 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Debug Python (edgeai)",
+            "name": "Debug Current Python File",
             "type": "debugpy",
             "request": "launch",
             "program": "${file}",
+            "cwd": "${workspaceFolder}",
             "console": "integratedTerminal",
             "env": {
-                "CONDA_DEFAULT_ENV": "edgeai"
-            },
-            "justMyCode": false
+                "PYTHONPATH": "${workspaceFolder}"
+            }
         }
     ]
 }
