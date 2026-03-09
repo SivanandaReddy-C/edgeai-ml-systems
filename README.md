@@ -11,7 +11,7 @@ The goal of phase 1 is to build a clean ML pipeline and measure performance char
 - Benchmark CNN vs Transformer
 
 ## System Pipeline
-![Pipeline](docs/system_pipeline.png)
+![Pipeline](docs/system_pipeline1.png)
 ## Repository Structure
 
 edgeai-ml-systems-phase1/
