@@ -1,3 +1,4 @@
+import argparse
 import yaml
 import torch
 import torch.nn as nn
@@ -58,11 +59,25 @@ def evaluate(model,test_loader,criterion):
     return total_loss/len(test_loader),accuracy
 
 
+def parse_args():
+    parser=argparse.ArgumentParser(description="CNN Training Script")
+
+    parser.add_argument("--batch_size",type=int,help="Batch size for training")
+    parser.add_argument("--epochs",type=int,help="Number of training epochs")
+    parser.add_argument("--lr",type=float,help="Learning rate")
+
+    return parser.parse_args()
+
+
+
 if __name__=="__main__":
+    args=parse_args()
+
     config=load_config("configs/cnn.yaml")
-    batch_size=config["training"]["batch_size"]
-    epochs=config["training"]['epochs']
-    lr=config["training"]["learning_rate"]
+    
+    batch_size=args.batch_size if args.batch_size else config["training"]["batch_size"]
+    epochs=args.epochs if args.epochs else config["training"]['epochs']
+    lr=args.lr if args.lr else config["training"]["learning_rate"]
 
     train_loader,test_loader=get_dataloaders(batch_size)
 
