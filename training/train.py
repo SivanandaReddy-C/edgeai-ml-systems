@@ -1,3 +1,4 @@
+import cProfile
 import argparse
 import yaml
 import torch
@@ -7,9 +8,30 @@ import torch.optim as optim
 from models.cnn import CNN
 from utils.dataset import get_dataloaders
 
+def parse_args():
+    parser=argparse.ArgumentParser(description="CNN Training Script")
+
+    parser.add_argument("--batch_size",type=int,help="Batch size for training")
+    parser.add_argument("--epochs",type=int,help="Number of training epochs")
+    parser.add_argument("--lr",type=float,help="Learning rate")
+
+    return parser.parse_args()
+
 def load_config(config_path):
     with open(config_path, "r") as file:
         config = yaml.safe_load(file)
+    return config
+
+def override_config(config,args):
+    if args.batch_size:
+        config["training"]["batch_size"]=args.batch_size
+
+    if args.epochs:
+        config["training"]["epochs"]=args.epochs
+
+    if args.lr:
+        config["training"]["learning_rate"]=args.lr
+    
     return config
 
 def train(model,train_loader,optimizer,criterion):
@@ -55,33 +77,9 @@ def evaluate(model,test_loader,criterion):
 
     return total_loss/len(test_loader),accuracy
 
-
-def parse_args():
-    parser=argparse.ArgumentParser(description="CNN Training Script")
-
-    parser.add_argument("--batch_size",type=int,help="Batch size for training")
-    parser.add_argument("--epochs",type=int,help="Number of training epochs")
-    parser.add_argument("--lr",type=float,help="Learning rate")
-
-    return parser.parse_args()
-
-def override_config(config,args):
-    if args.batch_size:
-        config["training"]["batch_size"]=args.batch_size
-
-    if args.epochs:
-        config["training"]["epochs"]=args.epochs
-
-    if args.lr:
-        config["training"]["learning_rate"]=args.lr
-    
-    return config
-
-if __name__=="__main__":
+def main():
     args=parse_args()
-
-    config=load_config("configs/cnn.yaml")
-    
+    config=load_config("configs/cnn.yaml")  
     config=override_config(config,args)
 
     batch_size=config["training"]["batch_size"]
@@ -116,6 +114,19 @@ if __name__=="__main__":
             print("Best model saved!")
 
         print("-" * 40)
+
+
+if __name__=="__main__":
+    profiler = cProfile.Profile()
+
+    profiler.enable()
+
+    main()
+
+    profiler.disable()
+
+    profiler.print_stats(sort="time")
+    profiler.dump_stats("training_profile.prof")
 
 
 
