@@ -70,7 +70,9 @@ Components:
 - Dataset: MNIST
 
 ## Transformer Encoder Architecture
-![Transformer](docs/transformer_encoder2.png)
+<p align="center">
+  <img src="docs/transformer_encoder2.png" alt="Transformer">
+</p>
 
 ## Benchmark Results
 | Metric | Value |
