@@ -69,6 +69,9 @@ Components:
 - Optimizer: Adam
 - Dataset: MNIST
 
+## Transformer Encoder Architecture
+![Transformer](docs/transformer_encoder.png)
+
 ## Benchmark Results
 | Metric | Value |
 |------|------|
