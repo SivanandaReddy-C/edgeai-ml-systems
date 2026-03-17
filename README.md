@@ -71,7 +71,7 @@ Components:
 
 ## Transformer Encoder Architecture
 <p align="center">
-  <img src="docs/transformer_encoder1.png" alt="Transformer">
+  <img src="docs/transformer_encoder3.png" alt="Transformer">
 </p>
 
 ## Benchmark Results
