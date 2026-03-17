@@ -120,19 +120,35 @@ class TransformerEncoderLayer(nn.Module):
         x=self.norm2(x+ffn_output)
 
         return x
-    
+
+class TransformerEncoder(nn.Module):
+    def __init__(self,d_model,num_heads,d_ff,num_layers):
+        super().__init__()
+
+        self.layers=nn.ModuleList([TransformerEncoderLayer(d_model,num_heads,d_ff)
+                                    for _ in range(num_layers)])
+        
+    def forward(self,x):
+        for layer in self.layers:
+            x=layer(x)
+
+        return x
+
+
+
 if __name__=="__main__":
     batch_size=2
     seq_len=5
     d_model=64
     num_heads=8
     d_ff=256
+    num_layers=2
     
     x=torch.rand(batch_size,seq_len,d_model)
 
-    encoder_layer=TransformerEncoderLayer(d_model,num_heads,d_ff)
+    encoder=TransformerEncoder(d_model,num_heads,d_ff,num_layers)
 
-    out=encoder_layer(x)
+    out=encoder(x)
 
     print("Input shape:",x.shape)
     print("Output shape:",out.shape)
