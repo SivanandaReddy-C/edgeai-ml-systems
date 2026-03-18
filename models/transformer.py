@@ -134,24 +134,30 @@ class TransformerEncoder(nn.Module):
 
         return x
 
+class TransformerClassifier(nn.Module):
+    def __init__(self,d_model=64,num_heads=8,d_ff=256,num_layers=2,num_classes=10):
+        super().__init__()
+        self.input_projection=nn.Linear(28,d_model)
+        self.positional_encoding=PositionalEncoding(d_model)
+        self.encoder=TransformerEncoder(d_model,num_heads,d_ff,num_layers)
+        self.classifier=nn.Linear(d_model,num_classes)
+    
+    def forward(self,x):
+        #x:[B,1,28,28]
+        x=x.squeeze(1)      #[B,28,28]
+        x=self.input_projection(x)  #[B,28,d_model]
+        x=self.positional_encoding(x)
+        x=self.encoder(x)
+        x=x.mean(dim=1) #global average pooling
+        x=self.classifier(x)
 
+        return x
 
 if __name__=="__main__":
-    batch_size=2
-    seq_len=5
-    d_model=64
-    num_heads=8
-    d_ff=256
-    num_layers=2
-    
-    x=torch.rand(batch_size,seq_len,d_model)
-
-    encoder=TransformerEncoder(d_model,num_heads,d_ff,num_layers)
-
-    out=encoder(x)
-
-    print("Input shape:",x.shape)
-    print("Output shape:",out.shape)
+    model=TransformerClassifier()
+    x=torch.randn(2,1,28,28)
+    out=model(x)
+    print(out.shape)
 
 
    

@@ -6,6 +6,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
+from models.transformer import TransformerClassifier
 from models.cnn import CNN
 from utils.dataset import get_dataloaders
 
@@ -90,7 +91,7 @@ def main():
 
     train_loader,test_loader=get_dataloaders(batch_size)
 
-    model=CNN()
+    model=TransformerClassifier()
 
     criterion=nn.CrossEntropyLoss()
 
