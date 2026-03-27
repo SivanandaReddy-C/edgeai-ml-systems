@@ -5,6 +5,7 @@ import yaml
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import time
 
 from models.transformer import TransformerClassifier
 from models.cnn import CNN
@@ -36,7 +37,7 @@ def override_config(config,args):
     
     return config
 
-@profile
+#@profile
 def train(model,train_loader,optimizer,criterion):
     model.train()
 
@@ -98,11 +99,25 @@ def main():
     optimizer=optim.Adam(model.parameters(),lr=lr)
 
     best_accuracy=0
+
     for epoch in range(epochs):
+
+        # Training time
+        train_start=time.time()
         train_loss, train_acc=train(model,train_loader,optimizer,criterion)
+        train_end=time.time()
 
+        #Validation time
+        val_start=time.time()
         val_loss,val_acc=evaluate(model,test_loader,criterion)
+        val_end=time.time()
 
+        train_time=train_end-train_start
+        val_time=val_end-val_start
+
+        print(f"Train Time:{train_time:.2f} seconds")
+        print(f"Validation Time:{val_time:.2f} seconds")
+        print(f"Total Epoch Time:{train_time+val_time:.2f} seconds")
         print(f"Epoch {epoch+1}/{epochs}")
         print(f"Train Loss:{train_loss:.4f}")
         print(f"Val Loss:{val_loss:.4f}")
@@ -120,16 +135,16 @@ def main():
 
 
 if __name__=="__main__":
-    #profiler = cProfile.Profile()
+    profiler = cProfile.Profile()
 
-   # profiler.enable()
+    profiler.enable()
 
     main()
 
-   # profiler.disable()
+    profiler.disable()
 
-   # profiler.print_stats(sort="time")
-   # profiler.dump_stats("training_profile.prof")
+    profiler.print_stats(sort="time")
+    profiler.dump_stats("training_profile.prof")
 
 
 
