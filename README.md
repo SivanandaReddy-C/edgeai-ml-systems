@@ -1,6 +1,10 @@
 # Edge AI ML Systems - Phase 1
 
-This project implements a modular ML training pipeline from scratch using PyTorch, focusing on ML systems engineering concepts such as training pipelines, benchmarking, profiling, and configuration management.  
+## Project Overview
+
+This project implements an end-to-end ML systems pipeline using CNN and Transformer models from scratch. 
+
+The focus is on system-level understanding including training workflows, performance benchmarking, profiling, and analyzing computational tradeoffs between different model architectures. 
 
 
 ## Phase 1 Objectives
@@ -106,6 +110,13 @@ Components:
 - Data loading can become a bottleneck without proper tuning.
 - Benchmarking should evaluate training, inference, and memory — not just accuracy.
 
+## Highlights
+
+- Built CNN and Transformer models from scratch
+- Implemented modular training pipeline with YAML configuration
+- Performed system-level benchmarking and profiling
+- Compared architectures based on performance, not just accuracy
+
 ## Conclusion
 
 This project demonstrates a complete ML systems pipeline including model implementation, training, profiling, and benchmarking.
@@ -123,7 +134,12 @@ conda activate edgeai
 pip install -r requirements.txt
 
 ### Train the model
+
+Default (CNN):
 python -m training.train
+
+Transformer:
+python -m training.train --model_name transformer
 
 ### Run benchmarks
 python -m benchmarks.benchmark
