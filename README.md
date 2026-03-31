@@ -92,7 +92,7 @@ Components:
 | Peak Memory Usage | ~335 MB | ~335 MB |
 | Best DataLoader Workers | \- | 2 |
 
-### Key Insights
+## Key Insights
 
 - Transformer models have fewer parameters but higher computational complexity due to attention mechanisms (O(n²)).
 - CNN is significantly faster for image-based tasks due to localized convolution operations.
