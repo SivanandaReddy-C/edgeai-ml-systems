@@ -16,4 +16,4 @@ quantized_model = torch.quantization.quantize_dynamic(
 
 print("Quantization complete!")
 
-torch.save(quantized_model.state_dict(),"deployment/cnn_int8.pth")
+torch.save(quantized_model,"deployment/cnn_int8.pth")
