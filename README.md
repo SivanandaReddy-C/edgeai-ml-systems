@@ -28,6 +28,26 @@ Goal: Optimize trained models for real-world inference performance
 - Exported CNN and Transformer models from PyTorch to ONNX format
 - Used dummy inputs to trace computation graphs
 
+### Validation
+- Verified ONNX model structure using ONNX checker
+- Ensured compatibility before inference
+
+### Inference (ONNX Runtime)
+- Ran inference using ONNX Runtime (C++ backend)
+- Used NumPy arrays instead of PyTorch tensors
+
+### Performance Benchmark
+| Model | PyTorch Latency | ONNX Latency |
+|------|----------------|-------------|
+| CNN  | 5.6070 ms      | 0.1009 ms   |
+
+### Key Insights
+- ONNX Runtime significantly reduces inference latency by eliminating Python overhead
+- Static graph execution enables runtime optimizations
+- Proper validation prevents runtime errors
+- Input/output names must match exactly during inference
+- Warmup iterations are necessary for accurate benchmarking
+
 ## Quantization
 
 ### Objective
@@ -48,25 +68,32 @@ Optimize model inference performance by reducing numerical precision from FP32 t
 ### Key Insight
 Quantization complements ONNX optimization by reducing computation cost, not just execution overhead.
 
-### Validation
-- Verified ONNX model structure using ONNX checker
-- Ensured compatibility before inference
+### Observation
 
-### Inference (ONNX Runtime)
-- Ran inference using ONNX Runtime (C++ backend)
-- Used NumPy arrays instead of PyTorch tensors
+| Model | FP32 Latency | INT8 Latency |
+|------|--------------|--------------|
+| CNN  | 0.2623 ms    | 0.5262 ms    |
 
-### Performance Benchmark
-| Model | PyTorch Latency | ONNX Latency |
-|------|----------------|-------------|
-| CNN  | 5.6070 ms      | 0.1009 ms   |
+### Insight
 
-### Key Insights
-- ONNX Runtime significantly reduces inference latency by eliminating Python overhead
-- Static graph execution enables runtime optimizations
-- Proper validation prevents runtime errors
-- Input/output names must match exactly during inference
-- Warmup iterations are necessary for accurate benchmarking
+Quantization did not improve performance for this CNN model. This is because:
+- The model is relatively small
+- Only Linear layers were quantized
+- Quantization overhead exceeded computational savings
+
+This highlights that optimization techniques must be evaluated contextually rather than assumed to always improve performance.
+
+### Runtime Optimization
+
+Applied ONNX Runtime graph optimizations and controlled threading.
+
+| Model | Latency (Before) | Latency (After) |
+|------|----------------|----------------|
+| FP32 | 0.0700 ms     | 0.0400 ms      |
+| INT8 | 0.2200 ms     | 0.0300 ms      |
+
+**Insight:**
+Runtime optimizations significantly improved performance and enabled INT8 to outperform FP32, highlighting the importance of execution-level tuning in deployment.
 
 ## Repository Structure
 
