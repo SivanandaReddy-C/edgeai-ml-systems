@@ -214,7 +214,7 @@ Runtime optimizations significantly improved performance and enabled INT8 to out
 
 👉 No improvement due to small workload  
 
----
+
 
 #### Batch = 8
 
@@ -227,7 +227,7 @@ Runtime optimizations significantly improved performance and enabled INT8 to out
 
 👉 ~2× speedup using parallelism  
 
----
+
 
 ### Key Insights
 
@@ -235,8 +235,9 @@ Runtime optimizations significantly improved performance and enabled INT8 to out
 - Larger workloads → parallelism improves performance  
 - Gains saturate due to CPU limits  
 
-💡 **Practical Insight:**
-Real-world deployment requires tuning both batch size and threading together. Optimal performance is achieved by balancing latency, throughput, and hardware utilization.
+### 💡Practical Insight 
+- Real-world deployment requires tuning both batch size and threading together. Optimal performance is achieved by balancing latency, throughput, and hardware utilization.
+
 ---
 
 # 🗂️ Repository Structure
