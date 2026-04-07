@@ -24,22 +24,33 @@ for _ in range(20):
     onnx_session.run(None,{input_name: input_numpy})
 
 # PyTorch Benchmark
-runs = 200
+runs = 1000
 
-start = time.perf_counter()
-for _ in range(runs):
-    torch_model(input_torch)
-end = time.perf_counter()
+results = []
 
-torch_latency = (end - start) / runs
+with torch.no_grad():
+    for _ in range(5):
+        start = time.perf_counter()
+        for _ in range(runs):
+            torch_model(input_torch)
+        end = time.perf_counter()
+
+        results.append((end - start) / runs)
+
+torch_latency = np.mean(results)
+
+results = []
 
 # ONNX Benchmark
-start = time.perf_counter()
-for _ in range(runs):
-    onnx_session.run(None, {input_name: input_numpy})
-end = time.perf_counter()
+for _ in range(5):
+    start = time.perf_counter()
+    for _ in range(runs):
+        onnx_session.run(None, {input_name: input_numpy})
+    end = time.perf_counter()
 
-onnx_latency = (end - start) / runs
+    results.append((end - start) / runs)
+
+onnx_latency = np.mean(results)
 
 # Results
 print(f"PyTorch_Latency: {torch_latency * 1000:.4f} ms")
