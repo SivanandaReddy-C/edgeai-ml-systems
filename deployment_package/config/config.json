@@ -1,5 +1,0 @@
-{
-    "model_path": "model/cnn_int8.onnx",
-    "input_shape": [1, 1, 28, 28],
-    "provider": "CPUExecutionProvider"
-}

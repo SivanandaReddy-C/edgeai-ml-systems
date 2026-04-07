@@ -3,6 +3,12 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class CNN(nn.Module):
+    """
+    Convolutional Neural Network for MNIST classification.
+
+    Architecture:
+    Conv → ReLU → Pool → Conv → ReLU → Pool → FC → ReLU → FC
+    """
     def __init__(self):
         super(CNN,self).__init__()
 
@@ -33,11 +39,11 @@ def count_parameters(model):
 if __name__=="__main__":
     model = CNN()
 
-    x = torch.randn(1,1,28,28)
+    x = torch.randn(1, 1, 28, 28)
 
     y = model(x)
 
-    print("Output shape:",y.shape)
+    print("Output shape:", y.shape)
 
-    print("Total parameters:",count_parameters(model))
+    print("Total parameters:", count_parameters(model))
   

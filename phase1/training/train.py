@@ -7,9 +7,9 @@ import torch.nn as nn
 import torch.optim as optim
 import time
 
-from models.transformer import TransformerClassifier
-from models.cnn import CNN
-from utils.dataset import get_dataloaders
+from phase1.models.transformer import TransformerClassifier
+from phase1.models.cnn import CNN
+from phase1.utils.dataset import get_dataloaders
 
 def parse_args():
     """

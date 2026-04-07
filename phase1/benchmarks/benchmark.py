@@ -1,10 +1,10 @@
 import time
 import torch
 
-from models.cnn import CNN
-from models.transformer import TransformerClassifier
-from utils.dataset import get_dataloaders
-from training.train import train
+from phase1.models.cnn import CNN
+from phase1.models.transformer import TransformerClassifier
+from phase1.utils.dataset import get_dataloaders
+from phase1.training.train import train
 
 BATCH_SIZE=32
 RUNS=100
