@@ -176,7 +176,7 @@ class TransformerClassifier(nn.Module):
     
     def forward(self,x):
         #x:[B,1,28,28]
-        x = x.squeeze(1)      #[B,28,28]
+        #x = x.squeeze(1)      #[B,28,28]
         x = self.input_projection(x)  #[B,28,d_model]
         x = self.positional_encoding(x)
         x = self.encoder(x)
