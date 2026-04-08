@@ -116,154 +116,54 @@ Forward Pass → Loss Calculation → Backpropagation → Optimizer Update
 ## 🎯 Objective
 
 Convert trained models into **efficient deployment-ready systems**:  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PyTorch → ONNX → Runtime → Quantization → Optimization  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PyTorch → ONNX → Validation → Benchmarking → Optimization  
 
 ---
+## ⚙️ ONNX Export
+- Exported CNN and Transformer models from PyTorch to ONNX
+- Carefully handled input shapes for both architectures
+- Ensured comparibility with ONNX runtime
+---
 
-## ⚙️ ONNX Deployment
+## ✅ Validation
+Validated ONNX models against PyTorch outputs:
 
-### Model Export
-- Converted PyTorch models to ONNX  
-- Used dummy inputs to trace graph 
-
-### Validation
-- Verified using ONNX checker  
-- Ensured inference compatibility  
-
-
-### Inference (ONNX Runtime)
-- Executed using ONNX Runtime (C++ backend)  
-- Used NumPy arrays instead of PyTorch tensors
-
-### 📊 Performance Comparison
-
+- Mean numerical difference: ~1e-6
+- Prediction consistency: 100% match  
+This ensures correctness of deployment pipeline.
+---
+## ⚡ Performance benchmarking
+### 📊 PyTorch vs ONNX
 | Model | PyTorch Latency | ONNX Latency |
 |------|----------------|-------------|
-| CNN  | 5.6070 ms      | 0.1009 ms   |
+| CNN  | ~0.7314 ms        | ~0.0926 ms    |
 
-### Key Insight
-ONNX significantly reduces latency by removing Python overhead and enabling graph-level optimizations.
+ONNX Runtime improves inference performance through graph optimizations and efficient execution backends.
 
+### 📊 CNN vs Transformer (ONNX)
+| Model | Latency |
+|------|--------|
+| CNN  | 0.0901 ms |
+| Transformer | 0.3912 ms |
 ---
-
-## ⚡ Quantization (FP32 → INT8)
-
-### Objective
-Reduce precision to improve efficiency.
-
-### Results
-
-| Model | FP32 Latency | INT8 Latency |
-|------|--------------|--------------|
-| CNN  | 0.2623 ms    | 0.5262 ms    |
-
-### Key Insight 
-Quantization **did not improve performance** for this model because:
-- Model is small  
-- Limited layers were quantized  
-- Overhead > compute savings  
-
-👉 This highlights that optimization is **context-dependent**, not guaranteed.
-
-
----
-
-## 🚀 Runtime Optimization
-
-Applied ONNX Runtime graph optimizations + threading control.
-
-| Model | Before | After |
-|------|--------|-------|
-| FP32 | 0.0700 ms | 0.0400 ms |
-| INT8 | 0.2200 ms | 0.0300 ms |
-
-### Key Insight 
-Runtime optimizations significantly improved performance and enabled INT8 to outperform FP32, highlighting the importance of execution-level tuning in deployment.
-
----
-
-## 📦 Batch Size Analysis
-
-| Batch | Batch Latency (ms) | Per-sample Latency (ms) |
-|------|--------------------|-------------------------|
-| 1    | 0.0365             | 0.0365                  |
-| 2    | 0.0497             | 0.0249                  |
-| 4    | 0.0901             | 0.0225                  |
-| 8    | 0.1583             | 0.0198                  |
-| 16   | 0.2868             | 0.0179                  |
-| 32   | 0.5527             | 0.0173                  |
-
-### Key Insights 
-- Batch latency increases with batch size
-- Per-sample latency decreases due to better compute utilization
-- Diminishing returns observed beyond batch size 16–32
----
-
-## ⚡ Threading & Parallelism
-
-### Results
-
-#### Batch = 1
-
-| Threads | Latency |
-|--------|--------|
-| 1 | 0.0361 ms |
-| 2 | 0.0364 ms |
-| 4 | 0.0360 ms |
-| 8 | 0.0400 ms |
-
-👉 No improvement due to small workload  
-
-
-
-#### Batch = 8
-
-| Threads | Latency |
-|--------|--------|
-| 1 | 0.1574 ms |
-| 2 | 0.0966 ms |
-| 4 | 0.0784 ms |
-| 8 | 0.0742 ms |
-
-👉 ~2× speedup using parallelism  
-
-
-
-### Key Insights
-
-- Small workloads → threading overhead dominates  
-- Larger workloads → parallelism improves performance  
-- Gains saturate due to CPU limits  
-
-### 💡Practical Insight 
-- Real-world deployment requires tuning both batch size and threading together. Optimal performance is achieved by balancing latency, throughput, and hardware utilization.
-
----
+## 🔍 Key Insight
+CNN achieves ~4× lower latency than Transformer due to localized convolution operations, 
+while Transformer incurs higher compute cost from global attention mechanisms.
 
 # 🗂️ Repository Structure
 
-edgeai-ml-systems-phase1/
+edgeai-ml-systems/
 
-models/  
-&nbsp;&nbsp;&nbsp;&nbsp;cnn.py  
-&nbsp;&nbsp;&nbsp;&nbsp;transformer.py 
+phase1/  
+  &nbsp;&nbsp;&nbsp;&nbsp;models/  
+  &nbsp;&nbsp;&nbsp;&nbsp;training/  
+  &nbsp;&nbsp;&nbsp;&nbsp;benchmarks/  
+  &nbsp;&nbsp;&nbsp;&nbsp;utils/      
+  &nbsp;&nbsp;&nbsp;&nbsp;configs/    
 
-training/  
-&nbsp;&nbsp;&nbsp;&nbsp;train.py 
-
-deployment/  
-&nbsp;&nbsp;&nbsp;&nbsp;export_onnx.py  
-&nbsp;&nbsp;&nbsp;&nbsp;quantize_onnx.py   
-&nbsp;&nbsp;&nbsp;&nbsp;benchmark_runtime.py 
-
-utils/  
-&nbsp;&nbsp;&nbsp;&nbsp;dataset.py  
-
-configs/  
-&nbsp;&nbsp;&nbsp;&nbsp;cnn.yaml
-
-benchmarks/  
-&nbsp;&nbsp;&nbsp;&nbsp;benchmark.py
+phase2/  
+  &nbsp;&nbsp;&nbsp;&nbsp;onnx/  
+  
 
 docs/  
 &nbsp;&nbsp;&nbsp;&nbsp;system_pipeline1.png  
@@ -272,22 +172,23 @@ docs/
 README.md  
 requirements.txt
 
+---
 
 # 🏁 Conclusion
 
-This project demonstrates a **complete ML systems lifecycle**:
+This project demonstrates a complete ML systems workflow:
 
-- Model design → Training → Profiling  
-- Benchmarking → Deployment → Optimization  
+- Model development (CNN, Transformer)
+- Deployment using ONNX
+- Validation for correctness
+- Performance benchmarking across architectures
 
-### Final Takeaways
+### Key Takeaways
 
-- Performance depends on **system-level factors**, not just model design  
-- Optimization techniques are **workload-dependent**  
-- Real-world ML systems require balancing:
-  - Latency  
-  - Throughput  
-  - Hardware utilization  
+- Model efficiency depends on system-level factors, not just architecture
+- CNNs are more latency-efficient for image tasks
+- Transformers introduce higher compute overhead due to attention
+- Proper validation is critical before deployment
 
 ---
 
