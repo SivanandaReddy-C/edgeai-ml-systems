@@ -19,13 +19,15 @@ class CNN(nn.Module):
 
         self.fc1 = nn.Linear(32*7*7,128)
         self.fc2 = nn.Linear(128,10)
+
+        self.flatten = nn.Flatten()
     
     def forward(self,x):
         x = self.pool(F.relu(self.conv1(x)))
         
         x = self.pool(F.relu(self.conv2(x)))
         
-        x = torch.flatten(x,1)
+        x = self.flatten(x)
         
         x = F.relu(self.fc1(x))
         
