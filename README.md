@@ -1,5 +1,15 @@
 # Edge AI ML Systems
 
+![Python](https://img.shields.io/badge/Python-3.10-blue)
+![PyTorch](https://img.shields.io/badge/PyTorch-DeepLearning-red)
+![ONNX](https://img.shields.io/badge/ONNX-Runtime-green)
+![Status](https://img.shields.io/badge/Status-Active-success)
+![Focus](https://img.shields.io/badge/Focus-ML%20Systems-orange)
+
+> 🚀 End-to-end ML Systems project covering training, deployment, and performance optimization for edge AI applications.
+
+---
+
 ## 🚀 Project Overview
 
 This project implements an **end-to-end ML systems pipeline**, covering both:
@@ -12,6 +22,28 @@ The focus is on **system-level understanding**, including:
 - Performance benchmarking
 - Profiling and optimization
 - Deployment for efficient inference
+
+---
+
+## ❓ Why This Project Matters
+
+Modern ML systems are not just about training models but deploying them efficiently.
+
+This project focuses on:
+- Bridging the gap between research and real-world deployment  
+- Understanding hardware-aware optimization  
+- Building production-ready ML pipelines  
+
+---
+
+## 💡 Highlights
+
+- Built end-to-end ML deployment pipeline (**PyTorch → ONNX → Optimization**)  
+- Achieved **~5–10× inference speedup** using ONNX Runtime  
+- Implemented **INT8 quantization** and analyzed real-world limitations  
+- Identified backend constraints (e.g., **ConvInteger not supported on CPU**)  
+- Performed **system-level benchmarking**: latency, throughput, threading  
+- Compared **CNN vs Transformer** from both model and deployment perspectives  
 
 ---
 
@@ -119,6 +151,19 @@ Convert trained models into **efficient deployment-ready systems**:
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PyTorch → ONNX → Validation → Benchmarking → Optimization  
 
 ---
+## ⚙️ Deployment Pipeline
+
+PyTorch Model  
+↓  
+ONNX Export  
+↓  
+ONNX Runtime Inference  
+↓  
+Quantization (INT8)  
+↓  
+Benchmarking (Latency / Throughput / Threads)
+
+---
 ## ⚙️ ONNX Export
 - Exported CNN and Transformer models from PyTorch to ONNX
 - Carefully handled input shapes for both architectures
@@ -138,7 +183,8 @@ This ensures correctness of deployment pipeline.
 |------|----------------|-------------|
 | CNN  | ~0.7314 ms        | ~0.0926 ms    |
 
-ONNX Runtime improves inference performance through graph optimizations and efficient execution backends.
+ONNX Runtime achieved **~5–10× latency reduction** through graph optimizations and efficient execution backends.
+
 
 ### 📊 CNN vs Transformer (ONNX)
 | Model | Latency |
@@ -146,9 +192,76 @@ ONNX Runtime improves inference performance through graph optimizations and effi
 | CNN  | 0.0901 ms |
 | Transformer | 0.3912 ms |
 ---
+
+## 📊 Deployment Results
+
+### 🔹 Latency Comparison (CPU)
+
+| Model        | FP32 Latency | INT8 Latency | Speedup |
+|-------------|-------------|-------------|---------|
+| CNN         | ~0.73 ms     | ❌ Not supported | — |
+| Transformer | ~0.35 ms    | ~0.40 ms    | ~1.0x |
+
+---
+
+### 🔹 Model Size Comparison
+
+| Model        | FP32 Size | INT8 Size |
+|-------------|----------|----------|
+| CNN         | 810 KB   | 208 KB   |
+| Transformer | 1677 KB  | 1686 KB  |
+
+---
+
+### 🔹 Thread Optimization (Transformer)
+
+| Threads | Latency |
+|--------|--------|
+| 1      | 0.1277 ms |
+| 2      | 0.1773 ms |
+| 4      | 0.1608 ms |
+| 8      | 0.2017 ms |
+
+---
+
+### 🔹 Batch Throughput (Transformer)
+
+| Batch Size | Latency | Throughput |
+|-----------|--------|------------|
+| 1         | 0.2781 ms | 3595 samples/sec |
+| 2         | 0.4311 ms | 4639 samples/sec |
+| 4         | 0.6364 ms | 6285 samples/sec |
+| 8         | 1.0101 ms | 7920 samples/sec |
+| 16        | 1.5844 ms | 10098 samples/sec |
+
+---
+
 ## 🔍 Key Insight
-CNN achieves ~4× lower latency than Transformer due to localized convolution operations, 
-while Transformer incurs higher compute cost from global attention mechanisms.
+
+CNN achieves lower latency due to localized convolution operations, while Transformer incurs higher compute cost due to attention mechanisms.
+
+---
+
+## 🔍 Key Observations (Deployment)
+
+- ONNX significantly reduces inference latency compared to PyTorch  
+- INT8 quantization reduces model size but does not always improve latency  
+- CNN INT8 model failed due to unsupported ConvInteger operator in CPUExecutionProvider  
+- Transformer INT8 model runs successfully on CPU  
+- Increasing CPU threads degraded performance due to overhead  
+- Larger batch sizes improve throughput but increase latency  
+
+---
+
+## 🧠 Key Learnings
+
+- Model optimization alone is not sufficient; backend support is critical  
+- Execution provider determines real-world performance  
+- Quantization benefits depend on hardware and operator support  
+- Small models do not benefit from multi-threading  
+- Throughput vs latency trade-off is key in deployment systems  
+
+---
 
 # 🗂️ Repository Structure
 
@@ -176,19 +289,20 @@ requirements.txt
 
 # 🏁 Conclusion
 
-This project demonstrates a complete ML systems workflow:
+This project demonstrates a complete ML deployment and optimization pipeline:
 
-- Model development (CNN, Transformer)
-- Deployment using ONNX
-- Validation for correctness
-- Performance benchmarking across architectures
+- Model development (CNN, Transformer)  
+- ONNX-based deployment  
+- Quantization and optimization  
+- System-level benchmarking  
 
 ### Key Takeaways
 
-- Model efficiency depends on system-level factors, not just architecture
-- CNNs are more latency-efficient for image tasks
-- Transformers introduce higher compute overhead due to attention
-- Proper validation is critical before deployment
+- Model performance depends on architecture and execution backend  
+- CNNs are more latency-efficient for vision tasks  
+- Transformers introduce higher compute cost  
+- Quantization benefits depend on runtime support  
+- Real-world deployment requires system-level understanding  
 
 ---
 
