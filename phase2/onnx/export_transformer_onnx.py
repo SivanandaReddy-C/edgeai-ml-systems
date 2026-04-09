@@ -26,9 +26,13 @@ torch.onnx.export(
     "phase2/onnx/transformer.onnx",
     input_names=["input"],
     output_names=["output"],
+    dynamic_axes={
+        "input": {0: "batch_size"},
+        "output": {0: "batch_size"}
+    },
     opset_version=18,
-    dynamo=False,                 
-    do_constant_folding=False    
+    do_constant_folding=False,
+    dynamo=False
 )
 print("Transformer ONNX export complete")
 
