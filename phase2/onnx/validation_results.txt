@@ -1,0 +1,11 @@
+CNN FP32: SUCCESS
+Input: [1,1,28,28]
+Output: [1,10]
+
+CNN INT8: FAILED
+Reason: ConvInteger not implemented in ONNX Runtime CPUExecutionProvider
+
+Transformer FP32: SUCCESS
+Input: dynamic batch_size
+
+Transformer INT8: SUCCESS
