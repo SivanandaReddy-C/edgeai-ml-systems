@@ -56,3 +56,21 @@
   2. Replace Flatten with Global Average Pooling
 - Chosen strategy: Keep the original CNN as baseline and create an optimized CNN variant using Global Average Pooling with a smaller classifier head
 - Commit message: Analyzed CNN memory bottleneck and selected GAP-based optimization strategy for embedded deployment
+
+# Day 5 - Build Optimized CNN (GAP-based)
+- Replaced Flatten + FC with Global Average Pooling
+- Reduced parameters drastically (~200K → ~320)
+
+## Key Insight:
+Global Average Pooling removes spatial redundancy and is highly efficient for embedded deployment.
+
+## Completion report:
+- Optimized model created: yes
+- ONNX export: success
+- ONNX validation: success
+- Output shape: [1, 10]
+- Observations:
+  - Export issue fixed by using opset_version=18 and dynamo=False
+  - Optimized model runs correctly in ONNX Runtime
+- Commit message:
+  Implemented optimized CNN with Global Average Pooling and successfully exported and validated ONNX model
