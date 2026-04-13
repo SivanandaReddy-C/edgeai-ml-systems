@@ -1,0 +1,10 @@
+16:00:28 **** Incremental Build of configuration Debug for project CNN_Optimized ****
+make -j28 all 
+arm-none-eabi-size  CNN_Optimized.elf 
+   text	   data	    bss	    dec	    hex	filename
+  70108	   2508	   4788	  77404	  12e5c	CNN_Optimized.elf
+Finished building: default.size.stdout
+ 
+
+16:00:28 Build Finished. 0 errors, 0 warnings. (took 352ms)
+

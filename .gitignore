@@ -2,3 +2,17 @@ data/
 __pycache__/
 *.pyc
 .ipynb_checkpoints/
+
+# Build folders
+Debug/
+Release/
+
+# Binaries
+*.elf
+*.bin
+*.hex
+*.map
+*.list
+
+# IDE files (optional)
+*.launch
