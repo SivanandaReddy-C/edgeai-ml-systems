@@ -7,6 +7,12 @@
 - Commit message: "Set up STM32CubeIDE, CubeMX, and X-CUBE-AI for B-L4S5I-IOT01A"
 
 # Day 2 - Prepare model for STM32 deployment
+- File(s) created/used: phase2/onnx/validate_onnx.py
+- How to run validate_onnx.py
+  - TO VALIDATE CNN FP32: python -m phase2.onnx.validate_onnx phase2/onnx/cnn.onnx
+  - TO VALIDATE TRANSFORMER FP32: python -m phase2.onnx.validate_onnx phase2/onnx/transformer.onnx
+  - TO VALIDATE CNN INT8: python -m phase2.onnx.validate_onnx phase2/onnx/cnn_int8.onnx
+  - TO VALIDATE TRANSFORMER INT8: python -m phase2.onnx.validate_onnx phase2/onnx/transformer_int8.onnx
 - Model used: CNN FP32, CNN INT8, Transformer FP32, Transformer INT8
 - Model paths: phase2/onnx/
 - CNN FP32:
@@ -27,6 +33,7 @@
 - Commit message: Prepared and validated ONNX models for STM32 deployment
 
 # Day 3 - Import model into STM32Cube.AI
+- File(s) created/updated: phase3/stm32_cube_ai/<your_project>.ioc
 - CNN FP32 import into Cube.AI: success
 - Input shape: [1, 28, 28, 1]
 - Output shape: [1, 10]
@@ -48,7 +55,8 @@
   Imported CNN models into Cube.AI; FP32 works, INT8 unsupported due to quantization operators
 
 # Day 4 — Memory Optimization Insights
-- Main bottleneck identified: CNN Flash usage dominated by FC layer
+- File(s) created/updated: Nothing
+- Main bottleneck identified: CNN Flash usage dominated by FC layer (Identified through Cube.AI report)
 - Flash usage: ~822KB
 - RAM usage: ~22KB
 - Optimization ideas:

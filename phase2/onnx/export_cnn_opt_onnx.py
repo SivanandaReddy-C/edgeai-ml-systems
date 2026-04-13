@@ -15,7 +15,7 @@ dummy_input = torch.randn(1, 1, 28, 28)
 torch.onnx.export(
     model,
     dummy_input,
-    "phase2/onnx/cnn.onnx",
+    "phase2/onnx/cnn_optimized.onnx",
     input_names=["input"],
     output_names=["output"],
     opset_version=18,  
