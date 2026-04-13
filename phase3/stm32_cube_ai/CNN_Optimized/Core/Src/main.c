@@ -18,11 +18,11 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include <unistd.h>
-#include <string.h>
-#include <stdio.h>
+
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include <stdio.h>
+#include <stdint.h>
 #include "network.h"
 #include "network_data.h"
 /* USER CODE END Includes */
@@ -59,6 +59,12 @@ static void MX_USART1_UART_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+void DWT_Init(void)
+{
+    CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk; // Enable trace
+    DWT->CYCCNT = 0; // Reset counter
+    DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk; // Enable counter
+}
 
 /* USER CODE END 0 */
 
@@ -99,6 +105,14 @@ int main(void)
   setvbuf(stdout, NULL, _IONBF, 0);
   printf("UART PRINTF OK\r\n");
 
+  DWT_Init();
+  printf("DWT initialized\r\n");
+
+  printf("SYSCLK source raw = %lu\r\n", __HAL_RCC_GET_SYSCLK_SOURCE());
+  printf("CFGR = 0x%08lX\r\n", RCC->CFGR);
+  printf("SystemCoreClock = %lu Hz\r\n", SystemCoreClock);
+  printf("HCLK = %lu Hz\r\n", HAL_RCC_GetHCLKFreq());
+
   ai_error err;
 
   /* Bind generated weights and local activations buffer */
@@ -128,7 +142,7 @@ int main(void)
   {
     /* USER CODE END WHILE */
 
-	  /* USER CODE BEGIN 3 */
+    /* USER CODE BEGIN 3 */
 	  ai_i32 n_batch;
 	  ai_float input_data[28 * 28];
 	  ai_float output_data[10];
@@ -146,8 +160,40 @@ int main(void)
 	  ai_input[0].data = AI_HANDLE_PTR(input_data);
 	  ai_output[0].data = AI_HANDLE_PTR(output_data);
 
+	  uint32_t t0, t1;
+	  int runs = 100;
+
+	  t0 = HAL_GetTick();
+
+	  for (int r = 0; r < runs; r++) {
+	      n_batch = ai_network_run(network, ai_input, ai_output);
+	  }
+
+	  t1 = HAL_GetTick();
+
+	  printf("100 runs total time = %lu ms\r\n", (unsigned long)(t1 - t0));
+	  printf("Average per run = %.3f ms\r\n", (float)(t1 - t0) / runs);
+
+
+	  /* Run inference */
+	  uint32_t start, end, cycles;
+	  float time_ms, time_us;
+	  uint32_t hclk;
+	  /* Start cycle counter */
+	  start = DWT->CYCCNT;
+
 	  /* Run inference */
 	  n_batch = ai_network_run(network, ai_input, ai_output);
+
+	  /* End cycle counter */
+	  end = DWT->CYCCNT;
+
+	  cycles = end - start;
+
+	  /* Convert to time (ms) */
+	  SystemCoreClockUpdate();
+	  time_ms = ((float)cycles * 1000.0f) / (float)SystemCoreClock;
+	  time_us = ((float)cycles * 1000000.0f) / (float)SystemCoreClock;
 
 	  printf("n_batch = %ld\r\n", (long)n_batch);
 
@@ -156,6 +202,7 @@ int main(void)
 	      printf("AI run failed: type=%d code=%d\r\n", run_err.type, run_err.code);
 	  } else {
 	      printf("Inference done\r\n");
+	      printf("Latency: %lu cycles | %.3f ms | %.1f us\r\n", cycles, time_ms, time_us);
 	      for (int i = 0; i < 10; i++) {
 	          printf("%0.6f ", output_data[i]);
 	      }

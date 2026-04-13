@@ -1,30 +1,30 @@
 ST Edge AI Core v2.2.0-20266 2adc00962
-Created date          : 2026-04-13 15:56:55
-Parameters            : generate --target stm32l4 --name network -m C:/Users/MIT/Documents/edgeai-ml-systems-phase1/phase2/onnx/cnn_optimized.onnx --compression none --verbosity 1 --workspace C:/Users/MIT/AppData/Local/Temp/mxAI_workspace1598875380390014536971451402421238 --output C:/Users/MIT/.stm32cubemx/network_output
+Created date          : 2026-04-13 17:31:22
+Parameters            : generate --target stm32l4 --name network -m C:/Users/MIT/Documents/edgeai-ml-systems-phase1/phase2/onnx/cnn_optimized.onnx --compression none --verbosity 1 --workspace C:/Users/MIT/AppData/Local/Temp/mxAI_workspace216553826819002177014573723028657 --output C:/Users/MIT/.stm32cubemx/network_output
 
 Exec/report summary (generate)
-----------------------------------------------------------------------------------------------------------
-model file         :   C:\Users\MIT\Documents\edgeai-ml-systems-phase1\phase2\onnx\cnn_optimized.onnx     
-type               :   onnx                                                                               
-c_name             :   network                                                                            
-compression        :   none                                                                               
-options            :   allocate-inputs, allocate-outputs                                                  
-optimization       :   balanced                                                                           
-target/series      :   stm32l4                                                                            
-workspace dir      :   C:\Users\MIT\AppData\Local\Temp\mxAI_workspace1598875380390014536971451402421238   
-output dir         :   C:\Users\MIT\.stm32cubemx\network_output                                           
-model_fmt          :   float                                                                              
-model_name         :   cnn_optimized                                                                      
-model_hash         :   0xb332ebc3e9015ea9b6a809c18a5ffd1f                                                 
-params #           :   5,130 items (20.04 KiB)                                                            
-----------------------------------------------------------------------------------------------------------
-input 1/1          :   'input', f32(1x28x28x1), 3.06 KBytes, activations                                  
-output 1/1         :   'output', f32(1x10), 40 Bytes, activations                                         
-macc               :   1,055,642                                                                          
-weights (ro)       :   20,520 B (20.04 KiB) (1 segment)                                                   
-activations (rw)   :   19,300 B (18.85 KiB) (1 segment) *                                                 
-ram (total)        :   19,300 B (18.85 KiB) = 19,300 + 0 + 0                                              
-----------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------
+model file         :   C:\Users\MIT\Documents\edgeai-ml-systems-phase1\phase2\onnx\cnn_optimized.onnx    
+type               :   onnx                                                                              
+c_name             :   network                                                                           
+compression        :   none                                                                              
+options            :   allocate-inputs, allocate-outputs                                                 
+optimization       :   balanced                                                                          
+target/series      :   stm32l4                                                                           
+workspace dir      :   C:\Users\MIT\AppData\Local\Temp\mxAI_workspace216553826819002177014573723028657   
+output dir         :   C:\Users\MIT\.stm32cubemx\network_output                                          
+model_fmt          :   float                                                                             
+model_name         :   cnn_optimized                                                                     
+model_hash         :   0xb332ebc3e9015ea9b6a809c18a5ffd1f                                                
+params #           :   5,130 items (20.04 KiB)                                                           
+---------------------------------------------------------------------------------------------------------
+input 1/1          :   'input', f32(1x28x28x1), 3.06 KBytes, activations                                 
+output 1/1         :   'output', f32(1x10), 40 Bytes, activations                                        
+macc               :   1,055,642                                                                         
+weights (ro)       :   20,520 B (20.04 KiB) (1 segment)                                                  
+activations (rw)   :   19,300 B (18.85 KiB) (1 segment) *                                                
+ram (total)        :   19,300 B (18.85 KiB) = 19,300 + 0 + 0                                             
+---------------------------------------------------------------------------------------------------------
 (*) 'input'/'output' buffers are allocated in the activations buffer
 
 Model name - cnn_optimized
