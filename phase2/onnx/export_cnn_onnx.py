@@ -11,15 +11,15 @@ print("PyTorch model loaded")
 # Dummy input
 dummy_input = torch.randn(1, 1, 28, 28)
 
-# 🔥 EXPORT (NO TRACE, NO SCRIPT)
+# EXPORT
 torch.onnx.export(
     model,
     dummy_input,
     "phase2/onnx/cnn.onnx",
     input_names=["input"],
     output_names=["output"],
-    opset_version=18,   # 🔥 match your PyTorch
-    dynamo=False        # 🔥 VERY IMPORTANT
+    opset_version=18,  
+    dynamo=False      
 )
 
 print("ONNX export successful")

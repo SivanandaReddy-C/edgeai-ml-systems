@@ -15,14 +15,16 @@
 This project implements an **end-to-end ML systems pipeline**, covering:
 
 - **Phase 1:** Model Development & Benchmarking  
-- **Phase 2:** Deployment & Inference Optimization  
+- **Phase 2:** Deployment & Inference Optimization 
+- **Phase 3:** Embedded Deployment on STM32   
 
 Focus areas:
 
 - Model training and architecture design  
 - Performance profiling and benchmarking  
 - Deployment optimization using ONNX Runtime  
-- System-level analysis (latency, throughput, load time)
+- Embedded AI execution on STM32 (Cortex-M4)  
+- System-level analysis (latency, throughput, memory)
 
 
 ---
@@ -49,6 +51,10 @@ This project focuses on:
 - Identified backend constraints (e.g., **ConvInteger unsupported on CPU**)  
 - Performed **system-level benchmarking**: latency, throughput, threads, memory  
 - Measured **end-to-end latency and cold start performance**  
+- Redesigned CNN architecture for embedded deployment (GAP-based optimization)  
+- Achieved ~24× reduction in model Flash memory on STM32  
+- Successfully executed ML inference on microcontroller (STM32 Cortex-M4)  
+- Built end-to-end pipeline from training → deployment → embedded execution  
 
 ---
 
@@ -374,6 +380,161 @@ Applied INT8 quantization to optimize model size.
 
 ---
 
+# 🔹 Phase 3 — Embedded Deployment on STM32
+
+## 🎯 Objective
+
+Deploy optimized ML models on **resource-constrained embedded hardware (STM32 Cortex-M4)** using X-CUBE-AI and execute inference on-device.
+
+---
+
+## ⚙️ Step 1 — Environment Setup
+
+- Installed STM32CubeIDE  
+- Verified CubeMX configuration  
+- Installed X-CUBE-AI package  
+- Created STM32 project for B-L4S5I-IOT01A  
+
+📌 Build status: **0 errors**
+
+---
+
+## ⚙️ Step 2 — Model Validation (Pre-Deployment)
+
+Validated ONNX models before deploying to embedded target:
+
+| Model | Status | Observation |
+|------|--------|------------|
+| CNN FP32 | ✅ Success | Correct input/output shapes |
+| CNN INT8 | ❌ Failed | `ConvInteger` unsupported |
+| Transformer FP32 | ✅ Success | Dynamic batch supported |
+| Transformer INT8 | ✅ Success | Runs correctly |
+
+📌 Insight:  
+Deployment feasibility depends on **operator support**, not just model correctness.
+
+---
+
+## ⚙️ Step 3 — Cube.AI Model Analysis
+
+Imported CNN model into STM32Cube.AI:
+
+### Baseline CNN
+
+- Flash: ~822 KB  
+- RAM: ~22 KB  
+
+📌 Observation:  
+- Fully Connected (FC) layer dominates memory (~97% of Flash)
+
+---
+
+## 🧠 Step 4 — Model Optimization  
+
+Redesigned CNN architecture for embedded deployment:  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Conv → Conv → Global Averaging Pooling → FC(32 → 10) 
+
+
+### Key Changes
+
+- Removed Flatten + large FC layer  
+- Introduced Global Average Pooling (GAP)  
+
+📌 Result:
+- Drastic reduction in parameters  
+
+---
+
+## 🔥 Step 5 — Memory Optimization Results
+
+| Model | Flash | RAM |
+|------|------|-----|
+| Original CNN | ~822 KB | ~22 KB |
+| Optimized CNN | ~34 KB | ~21.5 KB |
+
+👉 **~24× reduction in Flash memory**
+
+📌 Insight:
+- Flash → dominated by weights  
+- RAM → dominated by activations  
+
+---
+
+## ⚙️ Step 6 — STM32 Firmware Integration
+
+- Generated STM32 project using CubeMX  
+- Imported optimized model into Cube.AI  
+- Used **low-level `network.c` API** for integration  
+- Configured UART for logging  
+- Implemented `printf` retarget using `_write()`  
+
+---
+
+## 🚀 Step 7 — On-Device Inference Execution
+
+Successfully executed inference on STM32:
+
+- Input: dummy tensor `[1, 28, 28, 1]`  
+- Output: 10-class logits  
+- Output observed via UART  
+
+### Example Output Behavior
+
+- Stable across iterations  
+- Deterministic for fixed input  
+
+📌 Confirms:
+- Correct model execution  
+- Proper firmware integration  
+
+---
+
+## ⚠️ Challenges Faced
+
+- CNN INT8 model failed due to unsupported operators (`ConvInteger`)  
+- ONNX export issues due to opset mismatch  
+- Reshape/Flatten incompatibility in Cube.AI  
+  → resolved using tensor indexing  
+- UART `printf` not working initially  
+  → resolved using `_write()` retarget and correct initialization order  
+
+---
+
+## 🧠 Key Insights (Phase 3)
+
+### 1. Deployment is Toolchain-Dependent
+- ONNX Runtime success ≠ STM32 compatibility  
+
+### 2. Fully Connected Layers Are Expensive
+- FC layers dominate Flash usage  
+- Must be minimized in embedded ML  
+
+### 3. Architecture Optimization > Quantization
+- GAP-based model significantly reduces memory  
+- Quantization alone is insufficient  
+
+### 4. Memory Behavior in Embedded ML
+- Flash → model weights  
+- RAM → activation buffers  
+
+### 5. Embedded ML Requires System-Level Thinking
+- Model design must consider hardware constraints  
+
+---
+
+## ✅ Outcome
+
+> Successfully deployed optimized CNN on STM32 and executed inference with UART output.
+
+---
+
+## 🔥 Phase 3 Key Achievement
+
+> End-to-end pipeline validated:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PyTorch → ONNX → Cube.AI → STM32 → UART Output 
+
+--- 
+
 # 🗂️ Repository Structure
 
 edgeai-ml-systems/
@@ -387,6 +548,10 @@ phase1/
 
 phase2/  
   &nbsp;&nbsp;&nbsp;&nbsp;onnx/  
+
+phase3/  
+  &nbsp;&nbsp;&nbsp;&nbsp;stm32_cube_ai/  
+  &nbsp;&nbsp;&nbsp;&nbsp;docs/ 
   
 
 docs/  
