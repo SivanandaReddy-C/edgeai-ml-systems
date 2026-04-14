@@ -26,3 +26,12 @@ Day 8 Complete:
   - Current model runs at ~107 ms on STM32 Cortex-M4
 - Commit message:
   Measured and validated CNN inference latency on STM32 (~107 ms) using DWT and batch timing
+
+# Day 9 - Compare baseline vs optimized model on STM32
+## 🎯 Goal
+By the end of today, you should have:
+
+- baseline CNN imported/generated on STM32
+- latency measured for baseline CNN
+- direct comparison against optimized CNN
+- clear conclusion on memory vs latency tradeoff
