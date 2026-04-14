@@ -46,7 +46,36 @@
 UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
-
+static const uint8_t digit_image[28 * 28] = {
+		0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+		0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+		0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+		0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+		0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+		0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+		0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+		0,0,0,0,0,0,84,185,159,151,60,36,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+		0,0,0,0,0,0,222,254,254,254,254,241,198,198,198,198,198,198,198,198,170,52,0,0,0,0,0,0,
+		0,0,0,0,0,0,67,114,72,114,163,227,254,225,254,254,254,250,229,254,254,140,0,0,0,0,0,0,
+		0,0,0,0,0,0,0,0,0,0,0,17,66,14,67,67,67,59,21,236,254,106,0,0,0,0,0,0,
+		0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,83,253,209,18,0,0,0,0,0,0,
+		0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,22,233,255,83,0,0,0,0,0,0,0,
+		0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,129,254,238,44,0,0,0,0,0,0,0,
+		0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,59,249,254,62,0,0,0,0,0,0,0,0,
+		0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,133,254,187,5,0,0,0,0,0,0,0,0,
+		0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,9,205,248,58,0,0,0,0,0,0,0,0,0,
+		0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,126,254,182,0,0,0,0,0,0,0,0,0,0,
+		0,0,0,0,0,0,0,0,0,0,0,0,0,0,75,251,240,57,0,0,0,0,0,0,0,0,0,0,
+		0,0,0,0,0,0,0,0,0,0,0,0,0,19,221,254,166,0,0,0,0,0,0,0,0,0,0,0,
+		0,0,0,0,0,0,0,0,0,0,0,0,3,203,254,219,35,0,0,0,0,0,0,0,0,0,0,0,
+		0,0,0,0,0,0,0,0,0,0,0,0,38,254,254,77,0,0,0,0,0,0,0,0,0,0,0,0,
+		0,0,0,0,0,0,0,0,0,0,0,31,224,254,115,1,0,0,0,0,0,0,0,0,0,0,0,0,
+		0,0,0,0,0,0,0,0,0,0,0,133,254,254,52,0,0,0,0,0,0,0,0,0,0,0,0,0,
+		0,0,0,0,0,0,0,0,0,0,61,242,254,254,52,0,0,0,0,0,0,0,0,0,0,0,0,0,
+		0,0,0,0,0,0,0,0,0,0,121,254,254,219,40,0,0,0,0,0,0,0,0,0,0,0,0,0,
+		0,0,0,0,0,0,0,0,0,0,121,254,207,18,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+		0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+		};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -61,9 +90,30 @@ static void MX_USART1_UART_Init(void);
 /* USER CODE BEGIN 0 */
 void DWT_Init(void)
 {
-    CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk; // Enable trace
-    DWT->CYCCNT = 0; // Reset counter
-    DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk; // Enable counter
+    CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+    DWT->CYCCNT = 0;
+    DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+}
+
+void preprocess_input(const uint8_t *src, ai_float *dst, uint32_t size)
+{
+    for (uint32_t i = 0; i < size; i++) {
+        dst[i] = ((ai_float)src[i]) / 255.0f;
+    }
+}
+
+int argmax(const ai_float *data, uint32_t size)
+{
+    int max_idx = 0;
+    ai_float max_val = data[0];
+
+    for (uint32_t i = 1; i < size; i++) {
+        if (data[i] > max_val) {
+            max_val = data[i];
+            max_idx = (int)i;
+        }
+    }
+    return max_idx;
 }
 
 /* USER CODE END 0 */
@@ -147,10 +197,8 @@ int main(void)
 	  ai_float input_data[28 * 28];
 	  ai_float output_data[10];
 
-	  /* Fill dummy input */
-	  for (int i = 0; i < 28 * 28; i++) {
-	      input_data[i] = 0.5f;
-	  }
+	  /* Fill input */
+	  preprocess_input(digit_image, input_data, 28 * 28);
 
 	  /* Get input and output buffer handles from the network */
 	  ai_buffer *ai_input = ai_network_inputs_get(network, NULL);
@@ -160,17 +208,14 @@ int main(void)
 	  ai_input[0].data = AI_HANDLE_PTR(input_data);
 	  ai_output[0].data = AI_HANDLE_PTR(output_data);
 
+	  /* latency validation through 100 runs (optional) */
 	  uint32_t t0, t1;
 	  int runs = 100;
-
 	  t0 = HAL_GetTick();
-
 	  for (int r = 0; r < runs; r++) {
 	      n_batch = ai_network_run(network, ai_input, ai_output);
 	  }
-
 	  t1 = HAL_GetTick();
-
 	  printf("100 runs total time = %lu ms\r\n", (unsigned long)(t1 - t0));
 	  printf("Average per run = %.3f ms\r\n", (float)(t1 - t0) / runs);
 
@@ -179,6 +224,7 @@ int main(void)
 	  uint32_t start, end, cycles;
 	  float time_ms, time_us;
 	  uint32_t hclk;
+
 	  /* Start cycle counter */
 	  start = DWT->CYCCNT;
 
@@ -201,8 +247,11 @@ int main(void)
 	      ai_error run_err = ai_network_get_error(network);
 	      printf("AI run failed: type=%d code=%d\r\n", run_err.type, run_err.code);
 	  } else {
+		  int pred = argmax(output_data, 10);
 	      printf("Inference done\r\n");
+	      printf("Predicted digit: %d\r\n", pred);
 	      printf("Latency: %lu cycles | %.3f ms | %.1f us\r\n", cycles, time_ms, time_us);
+
 	      for (int i = 0; i < 10; i++) {
 	          printf("%0.6f ", output_data[i]);
 	      }

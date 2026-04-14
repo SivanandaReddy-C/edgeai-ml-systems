@@ -3,7 +3,7 @@ from phase1.models.cnn_optimized import CNNOptimized
 
 # Load model
 model = CNNOptimized()
-#model.load_state_dict(torch.load("phase1/best_cnn.pth"))
+model.load_state_dict(torch.load("phase1/best_cnn_optimized.pth"))
 model.eval()
 
 print("PyTorch model loaded")

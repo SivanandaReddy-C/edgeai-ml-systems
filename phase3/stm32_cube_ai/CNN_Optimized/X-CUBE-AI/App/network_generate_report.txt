@@ -1,6 +1,6 @@
 ST Edge AI Core v2.2.0-20266 2adc00962
-Created date          : 2026-04-14 11:36:15
-Parameters            : generate --target stm32l4 --name network -m C:/Users/MIT/Documents/edgeai-ml-systems-phase1/phase2/onnx/cnn_optimized.onnx --compression none --verbosity 1 -O time --workspace C:/Users/MIT/AppData/Local/Temp/mxAI_workspace867430054386001222558420390606168 --output C:/Users/MIT/.stm32cubemx/network_output
+Created date          : 2026-04-14 16:24:01
+Parameters            : generate --target stm32l4 --name network -m C:/Users/MIT/Documents/edgeai-ml-systems-phase1/phase2/onnx/cnn_optimized.onnx --compression none --verbosity 1 -O time --workspace C:/Users/MIT/AppData/Local/Temp/mxAI_workspace104014768226700754001969424191262 --output C:/Users/MIT/.stm32cubemx/network_output
 
 Exec/report summary (generate)
 ---------------------------------------------------------------------------------------------------------
@@ -11,11 +11,11 @@ compression        :   none
 options            :   allocate-inputs, allocate-outputs                                                 
 optimization       :   time                                                                              
 target/series      :   stm32l4                                                                           
-workspace dir      :   C:\Users\MIT\AppData\Local\Temp\mxAI_workspace867430054386001222558420390606168   
+workspace dir      :   C:\Users\MIT\AppData\Local\Temp\mxAI_workspace104014768226700754001969424191262   
 output dir         :   C:\Users\MIT\.stm32cubemx\network_output                                          
 model_fmt          :   float                                                                             
 model_name         :   cnn_optimized                                                                     
-model_hash         :   0xb332ebc3e9015ea9b6a809c18a5ffd1f                                                
+model_hash         :   0xbaa6456f8b3449630c72e2190063bb0e                                                
 params #           :   5,130 items (20.04 KiB)                                                           
 ---------------------------------------------------------------------------------------------------------
 input 1/1          :   'input', f32(1x28x28x1), 3.06 KBytes, activations                                 

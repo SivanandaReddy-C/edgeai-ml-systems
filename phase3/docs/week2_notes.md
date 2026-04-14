@@ -10,22 +10,36 @@ By end of today, you must have:
 
 ## Completion report:
 Day 8 Complete:
-- Latency measurement: success
-- Method: DWT cycle counter + 100-run validation
-- Cycles: ~1,285,000 cycles
-- Latency: ~107.08 ms per inference
-- Stability: highly stable across runs
-- Validation:
-  - 100 runs took ~10708 ms
-  - Confirms ~107 ms per inference
+- Model: Baseline CNN (original architecture)
+- Deployment: STM32 X-CUBE-AI integration successful
+
+- Memory Analysis:
+  - Parameters: ~206,922
+  - Flash: ~841,924 B (~822 KB)
+  - RAM: ~22,044 B (~21.5 KB)
+
+- Compute Complexity:
+  - Total MACs: ~1.25M operations
+  - Dominant compute: Conv2 layer (~73% of operations)
+  - FC layer contributes significant compute (~16%)
+
 - Observations:
-  - Latency dominated by FP32 computation
-  - Cycle count consistent across runs
-  - Measurement verified using both cycle counter and time-based averaging
+  - Flash memory is heavily dominated by FC1 layer (~97% of total weights)
+  - Convolution layers dominate runtime computation
+  - RAM usage remains relatively small and stable (~21 KB)
+  - Model size is too large for efficient embedded deployment due to FC layer
+
+- Insights:
+  - Fully Connected layer is the primary bottleneck for Flash usage
+  - Convolution layers are the primary bottleneck for computation/latency
+  - Highlights the need for architectural optimization (e.g., Global Average Pooling)
+
 - Conclusion:
-  - Current model runs at ~107 ms on STM32 Cortex-M4
+  - Baseline CNN is functional but memory-inefficient for embedded deployment
+  - Provides reference point for optimization comparison (Day 9)
+
 - Commit message:
-  Measured and validated CNN inference latency on STM32 (~107 ms) using DWT and batch timing
+  Analyzed baseline CNN memory and compute profile on STM32; identified FC layer as major Flash bottleneck
 
 # Day 9 - Compare baseline vs optimized model on STM32
 ## 🎯 Goal
@@ -40,26 +54,50 @@ By the end of today, you should have:
 Day 9 Complete:
 - Baseline CNN generated on STM32: yes
 - Baseline CNN inference: success
-- Baseline Flash: ~841,924 B (~822 KB)
-- Baseline RAM: ~22,044 B (~21.5 KB)
-- Baseline latency: ~125.67 ms
-- Optimized Flash: ~33,756 B (~34 KB)
-- Optimized RAM: ~21.5 KB
-- Optimized latency: ~107.08 ms
+
+- Baseline Model Details:
+  - Parameters: ~206,922
+  - Flash: ~841,924 B (~822 KB)
+  - RAM: ~22,044 B (~21.5 KB)
+  - MACs: ~1.25M operations
+
+- Optimized Model Details:
+  - Parameters: ~5,130
+  - Flash: ~33,756 B (~34 KB)
+  - RAM: ~21,500 B (~21.5 KB)
+  - MACs: ~1.05M operations
+
+- Latency Measurements:
+  - Baseline latency: ~125.67 ms
+  - Optimized latency: ~107.08 ms
 
 - Comparison summary:
   - Parameter reduction: ~40×
   - Flash reduction: ~24×
-  - RAM: nearly unchanged
+  - RAM: nearly unchanged (activation-dominated)
+  - MAC reduction: ~16% (1.25M → 1.05M)
   - Latency improvement: ~15%
 
-- Key insight:
-  - Memory optimization significantly reduced Flash usage
-  - Latency improvement limited because convolution layers dominate compute
-  - FP32 execution on Cortex-M4 remains the primary bottleneck
+- Key observations:
+  - Baseline CNN Flash is dominated by FC layer (~97% of weights) :contentReference[oaicite:0]{index=0}
+  - Optimized CNN removes FC bottleneck using Global Average Pooling
+  - Convolution layers dominate compute in both models (~85–90%)
+  - RAM usage remains similar because activations (~19 KB) dominate memory in both cases :contentReference[oaicite:1]{index=1}
+  - All operations are FP32 (100%), limiting performance gains :contentReference[oaicite:2]{index=2}
+
+- Insights:
+  - Memory optimization is highly effective for reducing Flash usage
+  - Removing FC layers drastically reduces parameters but only moderately reduces computation
+  - Latency improvement is limited because Conv2 layer dominates MAC operations
+  - Performance bottleneck is compute-bound, not memory-bound
+
+- Conclusion:
+  - Architectural optimization (GAP-based CNN) achieves significant memory savings (~24× Flash reduction)
+  - Latency improvement (~15%) is modest due to FP32 computation and convolution dominance
+  - Further speedup requires quantization (INT8) or optimized kernels (e.g., CMSIS-NN)
 
 - Commit message:
-  Compared baseline and optimized CNN performance on STM32 (memory vs latency tradeoff analysis)
+  Compared baseline vs optimized CNN on STM32; achieved ~24× Flash reduction with modest (~15%) latency improvement and identified compute bottlenecks
 
   # Day 10 - Speed Optimization (INT8/CMSIS-NN Direction)
   ## 🎯 Goal
@@ -70,26 +108,54 @@ Day 9 Complete:
   - Measure latency improvement (if any)
   - Build strong system-level explanation
 
-  ## Completion report
-  Day 10 Complete:
+  ## Completion report:
+Day 10 Complete:
 - Cube.AI optimization modes tested: yes
 - Modes tested: Balanced, Time
-- Balanced latency: ~107.08 ms
-- Time latency: ~108.12 ms
 
-- INT8 model tested: yes
-- INT8 support status: not supported (ConvInteger issue)
+- Latency Results:
+  - Balanced latency: ~107.08 ms
+  - Time latency: ~108.12 ms
+  - Observation: negligible difference (~1%)
+
+- Model Characteristics (same across modes):
+  - MACs: ~1.05M operations
+  - Parameters: ~5,130
+  - Compute graph unchanged
+
+- Memory Differences:
+  - Balanced mode:
+    - Activations: ~19 KB
+    - Total RAM: ~21.5 KB
+  - Time mode:
+    - Activations: ~53 KB (~2.7× increase)
+    - Total RAM: ~56 KB
 
 - Key observations:
-  - Changing optimization mode had negligible impact on latency
-  - Conv2 layer dominates computation (~85% MACs)
-  - FP32 operations (~98%) are the main performance bottleneck
-  - Cube.AI settings cannot significantly reduce compute-heavy workload
+  - Optimization mode does NOT change compute (MACs remain constant)
+  - Conv2 layer dominates computation (~85% of MACs) :contentReference[oaicite:5]{index=5}
+  - Time optimization increases RAM significantly by allocating larger intermediate buffers
+  - Despite higher RAM usage, latency improvement is negligible
+  - FP32 operations dominate (~98–100%), limiting execution speed :contentReference[oaicite:6]{index=6}
+
+- Insights:
+  - Performance is compute-bound, not memory-bound
+  - Increasing memory (Time mode) does not improve speed on Cortex-M4
+  - Optimization modes mainly affect memory layout, not arithmetic workload
+  - Conv2 layer remains the critical bottleneck regardless of optimization mode
+
+- INT8 Evaluation:
+  - INT8 model tested: yes
+  - Status: not supported (ConvInteger unsupported in CPUExecutionProvider)
+  - Indicates limitation in deployment pipeline for quantized CNN
 
 - Conclusion:
-  - Latency is dominated by model architecture and numerical precision
-  - Significant speedup requires INT8 quantization or optimized kernels (CMSIS-NN)
-  - Cube.AI optimization modes provide only minor improvements
+  - Cube.AI optimization modes have minimal impact on latency for compute-heavy FP32 models
+  - Time mode trades higher RAM (~2.7×) for negligible performance gain
+  - True speedup requires:
+    - INT8 quantization support, or
+    - optimized kernels (CMSIS-NN), or
+    - architecture-level compute reduction
 
 - Commit message:
-  Evaluated Cube.AI optimization modes; confirmed FP32 compute bottleneck and limited impact on latency
+  Evaluated Cube.AI optimization modes; identified compute-bound behavior and confirmed limited latency gains despite increased memory usage

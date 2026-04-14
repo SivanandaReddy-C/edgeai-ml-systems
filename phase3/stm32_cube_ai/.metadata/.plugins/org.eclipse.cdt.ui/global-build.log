@@ -1,14 +1,14 @@
-11:36:50 **** Incremental Build of configuration Debug for project CNN_Optimized ****
+15:37:18 **** Incremental Build of configuration Debug for project CNN_Optimized ****
 make -j28 all 
 arm-none-eabi-size  CNN_Optimized.elf 
    text	   data	    bss	    dec	    hex	filename
-  70340	   3004	   4820	  78164	  13154	CNN_Optimized.elf
+ 880028	   3056	   4784	 887868	  d8c3c	CNN_Optimized.elf
 Finished building: default.size.stdout
  
-11:37:02 **** Incremental Build of configuration Debug for project CNN_Optimized ****
+15:37:21 **** Incremental Build of configuration Debug for project CNN_Optimized ****
 make -j28 all 
 arm-none-eabi-size  CNN_Optimized.elf 
    text	   data	    bss	    dec	    hex	filename
-  70340	   3004	   4820	  78164	  13154	CNN_Optimized.elf
+ 880028	   3056	   4784	 887868	  d8c3c	CNN_Optimized.elf
 Finished building: default.size.stdout
  
