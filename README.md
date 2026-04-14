@@ -500,38 +500,138 @@ Successfully executed inference on STM32:
 
 ---
 
-## 🧠 Key Insights (Phase 3)
+# 🔥 Phase 3 — Extended System Analysis
 
-### 1. Deployment is Toolchain-Dependent
-- ONNX Runtime success ≠ STM32 compatibility  
-
-### 2. Fully Connected Layers Are Expensive
-- FC layers dominate Flash usage  
-- Must be minimized in embedded ML  
-
-### 3. Architecture Optimization > Quantization
-- GAP-based model significantly reduces memory  
-- Quantization alone is insufficient  
-
-### 4. Memory Behavior in Embedded ML
-- Flash → model weights  
-- RAM → activation buffers  
-
-### 5. Embedded ML Requires System-Level Thinking
-- Model design must consider hardware constraints  
+This section extends Phase 3 beyond deployment into **detailed system-level evaluation** using real STM32 execution data.
 
 ---
 
-## ✅ Outcome
+## 📊 Model Comparison on STM32
 
-> Successfully deployed optimized CNN on STM32 and executed inference with UART output.
+| Metric | Baseline CNN | Optimized CNN |
+|------|-------------|--------------|
+| Parameters | ~206K | ~5K |
+| Flash | ~822 KB | ~34 KB |
+| RAM | ~21.5 KB | ~21.5 KB |
+| MACs | ~1.25M | ~1.05M |
+| Latency | ~125.67 ms | ~107.08 ms |
+
+---
+
+## 🧠 Memory Behavior
+
+- Flash dominated by FC layer (~97%)
+- Optimization removes FC bottleneck → ~24× reduction
+- RAM unchanged → activation dominated (~21 KB)
+
+👉 Weight optimization ≠ runtime memory optimization  
+
+---
+
+## ⚙️ Compute & Latency Analysis
+
+- Conv2 layer dominates (~85% MACs)
+- System is **compute-bound**
+- FP32 arithmetic is primary bottleneck
+
+👉 Parameter reduction does NOT linearly reduce latency  
+
+---
+
+## ⚙️ Cube.AI Optimization Modes
+
+| Mode | Latency | RAM |
+|------|--------|-----|
+| Balanced | ~107 ms | ~21 KB |
+| Time | ~108 ms | ~56 KB |
+
+👉 Memory increase does not improve speed  
+👉 Optimization affects layout, not computation  
+
+---
+
+## ⚠️ INT8 Deployment Limitation
+
+INT8 model failed during Cube.AI Analyze:
+
+Unsupported operators:
+- ConvInteger  
+- MatMulInteger  
+- DynamicQuantizeLinear  
+
+### Insight
+
+- ONNX INT8 ≠ STM32-compatible INT8  
+- External quantization not supported  
+
+👉 Deployment depends on **operator + toolchain compatibility**
+
+---
+
+## 🧪 Stability & Robustness Testing
+
+Tested with:
+- Valid MNIST input  
+- Zero input  
+- Max input  
+- Noise input  
+- 200 repeated runs  
+
+### Results
+
+- Failed runs: 0  
+- Invalid outputs: 0  
+- Prediction changes: 0  
+- Stable latency (~126 ms)
+
+### Edge Behavior
+
+| Input | Prediction |
+|------|-----------|
+| Zero | 1 |
+| Max | 5 |
+| Noise | 3 |
+
+👉 Model always produces valid output  
+👉 Stable but not semantically reliable for invalid inputs  
+
+---
+
+## 🧠 System-Level Insights
+
+- Embedded ML is dominated by:
+  - Convolution compute
+  - FP32 precision cost  
+
+- Memory vs Compute:
+  - Flash → easy to reduce  
+  - Compute → hard to reduce  
+
+- Toolchain matters:
+  - ONNX success ≠ STM32 compatibility  
+
+---
+
+## ⚠️ Limitations
+
+- FP32 inference latency is high (~100+ ms)  
+- INT8 deployment unsupported  
+- No CMSIS-NN optimization yet  
+
+---
+
+## 🚀 Future Direction
+
+- CMSIS-NN (INT8 acceleration)  
+- Cube.AI internal quantization  
+- Lightweight architectures  
+- Reduced convolution complexity  
 
 ---
 
 ## 🔥 Phase 3 Key Achievement
-
 > End-to-end pipeline validated:
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PyTorch → ONNX → Cube.AI → STM32 → UART Output 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PyTorch → ONNX → Cube.AI → STM32 → UART → System Analysis
 
 --- 
 
@@ -599,6 +699,9 @@ python -m phase1.training.train
 
 Transformer:  
 python -m phase1.training.train --model_name transformer
+
+CNN Optimized:
+python -m phase1.training.train --model_name cnn_optimized
 
 ### Benchmarking:    
 python -m phase1.benchmarks.benchmark

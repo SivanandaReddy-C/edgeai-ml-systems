@@ -453,3 +453,35 @@ Week 2 demonstrates that:
 - Architectural optimization significantly reduces memory usage
 - Latency improvement is limited by compute-heavy convolution layers
 - Toolchain compatibility is a critical factor in embedded ML deployment
+
+## Completion report
+Day 14 Complete:
+- Consolidated analysis written: yes
+
+- Sections covered:
+  - Memory vs compute behavior:
+    - Flash dominated by FC layer (~97%) in baseline
+    - RAM dominated by activations (~21 KB)
+    - Optimization reduced Flash ~24× with negligible RAM change
+  - Latency analysis:
+    - Conv2 contributes ~85% MACs
+    - FP32 computation limits speed (~107–126 ms range)
+    - Parameter reduction does not linearly reduce latency
+  - Toolchain limitations:
+    - INT8 ONNX failed due to unsupported operators (ConvInteger, MatMulInteger, DynamicQuantizeLinear)
+    - External quantization not compatible with STM32Cube.AI
+  - System-level insights:
+    - System is compute-bound, not memory-bound
+    - Deployment success depends on operator and toolchain support
+    - Stability confirmed under repeated and edge-case inputs
+  - Next steps:
+    - Explore CMSIS-NN for INT8 acceleration
+    - Investigate internal quantization support
+    - Reduce convolution compute cost
+
+- Key takeaway:
+  - Embedded ML optimization requires balancing architecture, compute cost, and deployment constraints
+  - Toolchain limitations can override model-level optimizations
+
+- Commit message:
+  Consolidated Week 2 analysis including memory bottlenecks, compute constraints, and deployment limitations on STM32
