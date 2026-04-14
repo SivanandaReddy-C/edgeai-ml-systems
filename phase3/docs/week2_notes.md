@@ -314,3 +314,142 @@ Day 12 Complete:
 - Significant speedup will require:
   - quantization support inside the deployment toolchain, or
   - CMSIS-NN / lower-level optimized kernels.
+
+## Completion report
+Day 13 Complete:
+- Notes file updated: yes
+
+- Topics documented:
+  - Memory constraints:
+    - FC layer dominates Flash (~97% in baseline)
+    - Activation buffers dominate RAM (~21 KB)
+  - Latency bottlenecks:
+    - Conv2 layer contributes ~85% MACs
+    - FP32 execution is main limitation on Cortex-M4
+  - Operator limitations:
+    - INT8 ONNX failed due to unsupported ops (ConvInteger, MatMulInteger, DynamicQuantizeLinear)
+    - External quantization not compatible with Cube.AI
+  - Stress-test observations:
+    - 0 failed runs, 0 invalid outputs
+    - deterministic inference across 200 runs
+    - stable behavior even for edge inputs
+
+- Key takeaway:
+  - Embedded ML performance is compute-bound, not memory-bound
+  - Deployment success depends on toolchain support, not just model optimization
+
+- Commit message:
+  Documented STM32 deployment insights including memory bottlenecks, compute constraints, and toolchain limitations
+
+# Day 14 — Consolidated Analysis (Week 2)
+
+## 1. Objective
+To deploy CNN models on STM32 and evaluate:
+- memory usage
+- inference latency
+- deployment feasibility
+
+---
+
+## 2. Models Evaluated
+
+#### Baseline CNN
+- Parameters: ~206K
+- Flash: ~822 KB
+- RAM: ~21.5 KB
+- Latency: ~125.67 ms
+
+### Optimized CNN (GAP-based)
+- Parameters: ~5K
+- Flash: ~34 KB
+- RAM: ~21.5 KB
+- Latency: ~107.08 ms
+
+---
+
+## 3. Key Findings
+
+### Memory Behavior
+- Flash usage in baseline CNN is dominated by FC layer (~97%)
+- Optimized CNN removes FC bottleneck → ~24× Flash reduction
+- RAM remains similar because activation buffers dominate (~19 KB)
+### Compute Behavior
+- Conv2 layer dominates computation (~85% MACs)
+- Parameter reduction does not proportionally reduce latency
+- System is compute-bound, not memory-bound
+
+### Latency Behavior
+- Baseline: ~125 ms
+- Optimized: ~107 ms
+- Improvement (~15%) is limited by convolution-heavy workload
+- FP32 arithmetic is the main performance bottleneck
+
+---
+
+## 4. Toolchain Limitations
+
+- INT8 ONNX model failed to deploy in STM32Cube.AI
+- Unsupported operators:
+  - ConvInteger
+  - MatMulInteger
+  - DynamicQuantizeLinear
+
+**Insight:**
+- ONNX quantization is not directly compatible with STM32Cube.AI
+- Deployment depends on operator support, not just model format
+
+---
+
+## 5. Stability & Robustness
+
+Stress testing results:
+- 0 failed runs
+- 0 invalid outputs
+- deterministic predictions across repeated runs
+
+Edge-case behavior:
+- model produces valid outputs even for invalid inputs
+- indicates stable but not semantically reliable behavior
+
+---
+
+## 6. System-Level Insights
+
+- Embedded ML performance is dominated by:
+  - convolution operations
+  - numerical precision (FP32)
+
+- Memory optimization is effective:
+  - large reduction in Flash
+  - minimal impact on latency
+
+- Deployment constraints are critical:
+  - toolchain limitations can block optimized models
+
+---
+
+## 7. Limitations
+
+- FP32 inference is slow (~100+ ms)
+- INT8 deployment not supported in current pipeline
+- No hardware-accelerated kernels used (CMSIS-NN not yet applied)
+
+---
+
+## 8. Next Steps (Week 3 Direction)
+
+- Explore CMSIS-NN for optimized INT8 inference
+- Investigate Cube.AI internal quantization options
+- Reduce convolution compute cost further
+- Evaluate alternative lightweight architectures
+
+---
+
+## 9. Final Conclusion
+
+Week 2 demonstrates that:
+
+- CNN models can be successfully deployed on STM32
+- Architectural optimization significantly reduces memory usage
+- Latency improvement is limited by compute-heavy convolution layers
+- Toolchain compatibility is a critical factor in embedded ML deployment
