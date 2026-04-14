@@ -99,16 +99,16 @@ Day 9 Complete:
 - Commit message:
   Compared baseline vs optimized CNN on STM32; achieved ~24× Flash reduction with modest (~15%) latency improvement and identified compute bottlenecks
 
-  # Day 10 - Speed Optimization (INT8/CMSIS-NN Direction)
-  ## 🎯 Goal
-  By end of Day 10, you should:
-  - Understand why FP32 is slow
-  - Try INT8 path (where possible)
-  - Explore Cube.AI optimizations
-  - Measure latency improvement (if any)
-  - Build strong system-level explanation
+# Day 10 - Speed Optimization (INT8/CMSIS-NN Direction)
+## 🎯 Goal
+By end of Day 10, you should:
+- Understand why FP32 is slow
+- Try INT8 path (where possible)
+- Explore Cube.AI optimizations
+- Measure latency improvement (if any)
+- Build strong system-level explanation
 
-  ## Completion report:
+## Completion report:
 Day 10 Complete:
 - Cube.AI optimization modes tested: yes
 - Modes tested: Balanced, Time
@@ -219,14 +219,14 @@ Day 11 Complete:
 - Commit message:
   Evaluated FP32 vs INT8 deployment on STM32; identified ConvInteger limitation preventing INT8 execution in Cube.AI
 
-  # Day 12 — Stress Testing
-  ## 🎯 Goal
-  Test robustness of inference on STM32
-  - Stability
-  - Consistency
-  - Edge cases
+# Day 12 — Stress Testing
+## 🎯 Goal
+Test robustness of inference on STM32
+- Stability
+- Consistency
+- Edge cases
 
-  ## Completion report:
+## Completion report:
 Day 12 Complete:
 - Continuous inference loop: implemented
 - Multi-input stress testing: completed
@@ -270,3 +270,47 @@ Day 12 Complete:
 
 - Commit message:
   Performed stress testing of STM32 inference pipeline; validated stability, determinism, and robustness across valid and edge-case inputs
+
+# Day 13 — Internal Documentation: Week 2 Insights
+
+## 1. Baseline vs Optimized CNN
+- Baseline CNN:
+  - Flash: ~822 KB
+  - RAM: ~21.5 KB
+  - Latency: ~125.67 ms
+- Optimized CNN:
+  - Flash: ~34 KB
+  - RAM: ~21.5 KB
+  - Latency: ~107.08 ms
+
+## 2. Memory Insights
+- Baseline CNN Flash usage is dominated by the FC layer.
+- Optimized CNN removes the large FC bottleneck using Global Average Pooling.
+- RAM remains almost unchanged because activations dominate runtime memory.
+
+## 3. Compute Insights
+- Conv2 is the main compute bottleneck in both baseline and optimized models.
+- Parameter reduction does not translate linearly into latency reduction.
+- FP32 execution on Cortex-M4 is the primary reason latency remains high.
+
+## 4. Toolchain Limitations
+- INT8 ONNX CNN could not be imported into STM32Cube.AI.
+- Unsupported operators observed:
+  - ConvInteger
+  - MatMulInteger
+  - DynamicQuantizeLinear
+- Conclusion: external ONNX quantization is not directly deployable in current STM32Cube.AI flow.
+
+## 5. Stability Insights
+- Stress testing across valid and invalid inputs showed:
+  - 0 failed runs
+  - 0 invalid outputs
+  - 0 prediction changes for repeated identical inputs
+- The pipeline is deterministic and numerically stable.
+
+## 6. Overall Week 2 Conclusion
+- Architectural optimization gave major Flash savings but only modest latency improvement.
+- Current deployment path is reliable with FP32 models.
+- Significant speedup will require:
+  - quantization support inside the deployment toolchain, or
+  - CMSIS-NN / lower-level optimized kernels.
