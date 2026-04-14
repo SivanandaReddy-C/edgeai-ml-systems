@@ -9,6 +9,7 @@ import time
 
 from phase1.models.transformer import TransformerClassifier
 from phase1.models.cnn import CNN
+from phase1.models.cnn_optimized import CNNOptimized
 from phase1.utils.dataset import get_dataloaders
 
 def parse_args():
@@ -149,7 +150,7 @@ def main():
     -Measures training and validation time per epoch
     """
     args = parse_args()
-    config = load_config("configs/cnn.yaml")  
+    config = load_config("phase1/configs/cnn.yaml")  
     config = override_config(config,args)
 
     batch_size = config["training"]["batch_size"]
@@ -161,6 +162,8 @@ def main():
         model = CNN()
     elif model_name == "transformer":
         model = TransformerClassifier()
+    elif model_name == "cnn_optimized":
+        model = CNNOptimized()
     else:
         raise ValueError("Invalid model name in config")
     
@@ -200,7 +203,7 @@ def main():
             
             best_accuracy = val_acc
             
-            torch.save(model.state_dict(),"best_transformer.pth")
+            torch.save(model.state_dict(),"best_cnn_optimized.pth")
             
             print("Best model saved!")
 

@@ -13,7 +13,7 @@ dataset = datasets.MNIST(
 )
 
 # Pick one sample
-image, label = dataset[0]
+image, label = dataset[712]
 
 print("Ground truth label:", label)
 
