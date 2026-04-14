@@ -159,3 +159,62 @@ Day 10 Complete:
 
 - Commit message:
   Evaluated Cube.AI optimization modes; identified compute-bound behavior and confirmed limited latency gains despite increased memory usage
+
+# Day 11 — Model Comparison (FP32 vs INT8)
+## 🎯 Goal
+Compare FP32 vs INT8
+→ Latency
+→ Memory
+
+## Completion report:
+Day 11 Complete:
+- FP32 model deployment on STM32: verified
+- INT8 model import attempt: completed
+
+- FP32 Results:
+  - Baseline CNN:
+    - Flash: ~822 KB
+    - RAM: ~21.5 KB
+    - Latency: ~125.67 ms
+  - Optimized CNN:
+    - Flash: ~34 KB
+    - RAM: ~21.5 KB
+    - Latency: ~107.08 ms
+
+- INT8 Evaluation:
+  - Model: CNN INT8 (ONNX)
+  - Status: Failed during Cube.AI Analyze step
+  - Error:
+    - Unsupported layer types:
+      - ConvInteger
+      - MatMulInteger
+      - DynamicQuantizeLinear
+
+- Comparison summary:
+  - FP32 models: fully functional and deployable on STM32
+  - INT8 model: not deployable due to unsupported operators
+  - Latency comparison not possible (INT8 execution failed)
+  - Memory comparison not available for INT8 in Cube.AI
+
+- Key observations:
+  - INT8 ONNX model introduces quantized operators (ConvInteger, MatMulInteger)
+  - These operators are not supported in STM32Cube.AI toolchain
+  - Cube.AI supports FP32 models and its own internal optimization flow
+  - External ONNX quantization is not directly compatible with STM32 deployment
+
+- Insights:
+  - Quantization alone does not guarantee deployability on embedded systems
+  - Operator compatibility is a critical constraint in deployment pipelines
+  - There is a mismatch between ONNX Runtime capabilities and STM32Cube.AI support
+  - Deployment success depends on toolchain support, not just model format
+
+- Conclusion:
+  - FP32 models are currently the only reliable deployment path on STM32 in this setup
+  - INT8 deployment is limited by lack of support for quantized ONNX operators
+  - Achieving INT8 acceleration requires alternative approaches such as:
+    - Cube.AI internal quantization (if supported)
+    - CMSIS-NN optimized kernels
+    - Architecture-level redesign
+
+- Commit message:
+  Evaluated FP32 vs INT8 deployment on STM32; identified ConvInteger limitation preventing INT8 execution in Cube.AI
