@@ -163,8 +163,8 @@ Day 10 Complete:
 # Day 11 — Model Comparison (FP32 vs INT8)
 ## 🎯 Goal
 Compare FP32 vs INT8
-→ Latency
-→ Memory
+- Latency
+- Memory
 
 ## Completion report:
 Day 11 Complete:
@@ -218,3 +218,55 @@ Day 11 Complete:
 
 - Commit message:
   Evaluated FP32 vs INT8 deployment on STM32; identified ConvInteger limitation preventing INT8 execution in Cube.AI
+
+  # Day 12 — Stress Testing
+  ## 🎯 Goal
+  Test robustness of inference on STM32
+  - Stability
+  - Consistency
+  - Edge cases
+
+  ## Completion report:
+Day 12 Complete:
+- Continuous inference loop: implemented
+- Multi-input stress testing: completed
+- Edge case testing: completed
+
+- Test scenarios:
+  - Valid MNIST input
+  - All-zero input
+  - All-255 input
+  - Deterministic noise input
+  - 200 repeated inferences per case
+
+- Results:
+  - Failed runs: 0 (no execution failures)
+  - Invalid outputs: 0 (no NaN or corrupted outputs)
+  - Prediction changes: 0 (deterministic inference)
+  - Latency: ~126.7 ms (consistent across all tests)
+
+- Observations:
+  - Inference stable across repeated executions
+  - No memory corruption or crashes observed
+  - Output values remained valid for all input types
+  - Model produces consistent predictions even for invalid inputs
+
+- Edge case behavior:
+  - Zero input → predicted class: 1
+  - Max input → predicted class: 5
+  - Noise input → predicted class: 3
+  - Indicates model always produces a valid classification
+
+- Key insights:
+  - Model is robust but not semantically reliable for invalid inputs
+  - Neural networks inherently map any input to a class
+  - Stability does not imply correctness for out-of-distribution data
+  - FP32 inference is numerically stable on Cortex-M4
+
+- Conclusion:
+  - STM32 inference pipeline is stable and reliable under sustained execution
+  - System is safe for real-time deployment scenarios
+  - Additional input validation may be required in real-world applications
+
+- Commit message:
+  Performed stress testing of STM32 inference pipeline; validated stability, determinism, and robustness across valid and edge-case inputs

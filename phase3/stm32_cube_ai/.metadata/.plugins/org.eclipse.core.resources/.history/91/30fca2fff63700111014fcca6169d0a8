@@ -115,6 +115,7 @@ static void MX_GPIO_Init(void);
 static void MX_USART1_UART_Init(void);
 
 /* USER CODE BEGIN PFP */
+/* USER CODE BEGIN PFP */
 void DWT_Init(void);
 void preprocess_input(const uint8_t *src, ai_float *dst, uint32_t size);
 int argmax(const ai_float *data, uint32_t size);
@@ -122,7 +123,7 @@ void init_test_images(void);
 void generate_noise_image(uint8_t *dst, uint32_t size);
 uint32_t run_stress_test(ai_handle network, const uint8_t *image, const char *name);
 /* USER CODE END PFP */
-
+/* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
