@@ -1,4 +1,3 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<session version="1.0">
-<refactoring comment="Delete resource &apos;CNN_Optimized&apos;" deleteContents="false" description="Delete resource &apos;CNN_Optimized&apos;" element1="/CNN_Optimized" flags="7" id="org.eclipse.ltk.core.refactoring.delete.resources" resources="1" stamp="1776144332432"/>
+<session version="1.0">&#x0A;<refactoring comment="Delete resource &apos;CNN_Optimized&apos;" deleteContents="false" description="Delete resource &apos;CNN_Optimized&apos;" element1="/CNN_Optimized" flags="7" id="org.eclipse.ltk.core.refactoring.delete.resources" resources="1" stamp="1776144332432"/>&#x0A;<refactoring comment="Delete resource &apos;CNN&apos;" deleteContents="false" description="Delete resource &apos;CNN&apos;" element1="/CNN" flags="7" id="org.eclipse.ltk.core.refactoring.delete.resources" resources="1" stamp="1776145755803"/>
 </session>
