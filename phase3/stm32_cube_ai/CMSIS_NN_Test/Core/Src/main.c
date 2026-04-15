@@ -91,86 +91,133 @@ int main(void)
   MX_GPIO_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-  // Input: 1x4x4x1
-  int8_t input_data[16] = {
-       1,  2,  3,  4,
-       5,  6,  7,  8,
-       9, 10, 11, 12,
-      13, 14, 15, 16
-  };
+  /* Paste generated Conv1 weights here */
+    int8_t conv1_weights[144] = {
+    		-28,58,-20,46,28,-28,48,-15,69,17,41,23,19,-4,-43,38,48,-1,-7,26,44,34,55,34,-61,-115,-21,57,-11,35,72,3,-90,80,-25,-43,52,73,-89,60,8,-43,-46,29,30,-96,11,88,-69,-29,56,-9,-15,74,59,68,-66,63,-58,-108,91,13,-108,10,-84,-59,73,-31,-68,94,93,50,29,-80,-75,-75,-27,75,0,59,93,-17,-110,-35,-23,-34,-21,87,114,27,-68,3,2,65,60,73,72,-15,-12,10,-46,-22,20,-36,24,3,-25,-6,-59,-95,-54,-32,18,-62,56,15,29,36,-11,20,-63,62,78,-82,-42,59,-6,60,65,58,37,-78,-55,-127,-47,77,-12,65,-11,-25,33,28,-13,-92
+    		};
 
-  // Kernel: 1 output channel, 3x3x1
-  int8_t kernel_data[9] = {
-      1, 0, -1,
-      1, 0, -1,
-      1, 0, -1
-  };
+    /* Paste generated Conv1 bias here */
+    int32_t conv1_bias[16] = {
+    		-682,-3650,1,-6354,-3807,-336,11064,-3464,20,813,-3246,-15356,14146,-3839,13494,-2546
+    		};
 
-  // Bias
-  int32_t bias[1] = {0};
+    /* Input: 1 x 28 x 28 x 1 */
+    uint8_t input_u8[28 * 28] = {
+    		0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    		0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    		0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    		0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    		0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    		0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    		0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    		0,0,0,0,0,0,84,185,159,151,60,36,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    		0,0,0,0,0,0,222,254,254,254,254,241,198,198,198,198,198,198,198,198,170,52,0,0,0,0,0,0,
+    		0,0,0,0,0,0,67,114,72,114,163,227,254,225,254,254,254,250,229,254,254,140,0,0,0,0,0,0,
+    		0,0,0,0,0,0,0,0,0,0,0,17,66,14,67,67,67,59,21,236,254,106,0,0,0,0,0,0,
+    		0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,83,253,209,18,0,0,0,0,0,0,
+    		0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,22,233,255,83,0,0,0,0,0,0,0,
+    		0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,129,254,238,44,0,0,0,0,0,0,0,
+    		0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,59,249,254,62,0,0,0,0,0,0,0,0,
+    		0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,133,254,187,5,0,0,0,0,0,0,0,0,
+    		0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,9,205,248,58,0,0,0,0,0,0,0,0,0,
+    		0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,126,254,182,0,0,0,0,0,0,0,0,0,0,
+    		0,0,0,0,0,0,0,0,0,0,0,0,0,0,75,251,240,57,0,0,0,0,0,0,0,0,0,0,
+    		0,0,0,0,0,0,0,0,0,0,0,0,0,19,221,254,166,0,0,0,0,0,0,0,0,0,0,0,
+    		0,0,0,0,0,0,0,0,0,0,0,0,3,203,254,219,35,0,0,0,0,0,0,0,0,0,0,0,
+    		0,0,0,0,0,0,0,0,0,0,0,0,38,254,254,77,0,0,0,0,0,0,0,0,0,0,0,0,
+    		0,0,0,0,0,0,0,0,0,0,0,31,224,254,115,1,0,0,0,0,0,0,0,0,0,0,0,0,
+    		0,0,0,0,0,0,0,0,0,0,0,133,254,254,52,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    		0,0,0,0,0,0,0,0,0,0,61,242,254,254,52,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    		0,0,0,0,0,0,0,0,0,0,121,254,254,219,40,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    		0,0,0,0,0,0,0,0,0,0,121,254,207,18,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    		0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    		};
 
-  // Output: 1x2x2x1
-  int8_t output_data[4] = {0};
 
-  // Quant params
-  int32_t multiplier[1] = {0x7FFFFFFF}; // ~1.0 in Q31
-  int32_t shift[1] = {0};
+    /* Simple dummy pattern for initial validation */
+    int8_t input_data[28 * 28];
 
-  // Scratch buffer
-  int16_t bufferA[64];
+    for (int i = 0; i < 28 * 28; i++) {
+        input_data[i] = (int8_t)((input_u8[i] * 127) / 255);
+    }
 
-  // Context
-  cmsis_nn_context ctx;
-  ctx.buf = bufferA;
-  ctx.size = sizeof(bufferA);
 
-  // Dimensions
-  cmsis_nn_dims input_dims   = {1, 4, 4, 1};
-  cmsis_nn_dims filter_dims  = {1, 3, 3, 1};
-  cmsis_nn_dims bias_dims    = {1, 1, 1, 1};
-  cmsis_nn_dims upscale_dims = {1, 1, 1, 1};
-  cmsis_nn_dims output_dims  = {1, 2, 2, 1};
+    /* Output: 1 x 26 x 26 x 16 */
+    int8_t output_data[26 * 26 * 16] = {0};
 
-  // Conv params
-  cmsis_nn_conv_params conv_params;
-  conv_params.padding.h = 0;
-  conv_params.padding.w = 0;
-  conv_params.stride.h = 1;
-  conv_params.stride.w = 1;
-  conv_params.dilation.h = 1;
-  conv_params.dilation.w = 1;
-  conv_params.input_offset = 0;
-  conv_params.output_offset = 0;
-  conv_params.activation.min = -128;
-  conv_params.activation.max = 127;
+    /* Per-channel quant params (temporary near-identity for sanity test) */
+    int32_t multiplier[16];
+    int32_t shift[16];
 
-  // Per-channel quant params
-  cmsis_nn_per_channel_quant_params quant_params;
-  quant_params.multiplier = multiplier;
-  quant_params.shift = shift;
+    for (int i = 0; i < 16; i++) {
+        multiplier[i] = 1 << 22;
+        shift[i] = 0;
+    }
 
-  // Run convolution
-  arm_cmsis_nn_status status = arm_convolve_s8(
-      &ctx,
-      &conv_params,
-      &quant_params,
-      &input_dims,
-      input_data,
-      &filter_dims,
-      kernel_data,
-      &bias_dims,
-      bias,
-      &upscale_dims,
-      &output_dims,
-      output_data
-  );
+    /* Scratch buffer */
+    int16_t bufferA[2000];
 
-  printf("Conv status: %d\r\n", status);
-  printf("Conv output:\r\n");
-  for (int i = 0; i < 4; i++) {
-      printf("%d ", output_data[i]);
-  }
-  printf("\r\n");
+    cmsis_nn_context ctx;
+    ctx.buf = bufferA;
+    ctx.size = sizeof(bufferA);
+
+    /* Tensor dimensions */
+    cmsis_nn_dims input_dims   = {1, 28, 28, 1};
+    cmsis_nn_dims filter_dims  = {16, 3, 3, 1};
+    cmsis_nn_dims bias_dims    = {16, 1, 1, 1};
+    cmsis_nn_dims upscale_dims = {1, 1, 1, 1};
+    cmsis_nn_dims output_dims  = {1, 26, 26, 16};
+
+    /* Convolution parameters */
+    cmsis_nn_conv_params conv_params;
+    conv_params.padding.h = 0;
+    conv_params.padding.w = 0;
+    conv_params.stride.h = 1;
+    conv_params.stride.w = 1;
+    conv_params.dilation.h = 1;
+    conv_params.dilation.w = 1;
+    conv_params.input_offset = 0;
+    conv_params.output_offset = 0;
+    conv_params.activation.min = -128;
+    conv_params.activation.max = 127;
+
+    cmsis_nn_per_channel_quant_params quant_params;
+    quant_params.multiplier = multiplier;
+    quant_params.shift = shift;
+
+    arm_cmsis_nn_status status = arm_convolve_s8(
+        &ctx,
+        &conv_params,
+        &quant_params,
+        &input_dims,
+        input_data,
+        &filter_dims,
+        conv1_weights,
+        &bias_dims,
+        conv1_bias,
+        &upscale_dims,
+        &output_dims,
+        output_data
+    );
+
+    printf("Conv1 status: %d\r\n", status);
+
+    if (status != ARM_CMSIS_NN_SUCCESS) {
+        printf("Conv1 failed!\r\n");
+    } else {
+    	printf("Conv1 output sample:\r\n");
+    	for (int i = 0; i < 40; i++) {
+    	    printf("%d ", output_data[i]);
+    	}
+    	printf("\r\n");
+
+    	int sat_pos = 0, sat_neg = 0;
+    	for (int i = 0; i < 26 * 26 * 16; i++) {
+    	    if (output_data[i] == 127) sat_pos++;
+    	    if (output_data[i] == -128) sat_neg++;
+    	}
+    	printf("Saturation count: +127=%d, -128=%d\r\n", sat_pos, sat_neg);
+    }
   /* USER CODE END 2 */
 
   /* Infinite loop */

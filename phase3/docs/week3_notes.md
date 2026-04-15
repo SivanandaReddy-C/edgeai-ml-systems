@@ -87,3 +87,45 @@ Day 17 Complete:
 
 - Commit message:
   Validated CMSIS-NN convolution kernel on STM32 with correct output and quantization handling
+
+# Day 18 
+## 🎯 Goal
+real CNN weights → C arrays → STM32
+
+## Completion report
+Day 18 Complete:
+- Conv1 weights exported from PyTorch: yes
+- Conv1 bias exported and quantized: yes
+- Real Conv1 layer integrated into CMSIS-NN test project: yes
+- STM32 execution status: success
+
+- Validation:
+  - Input: MNIST-style 28×28 image
+  - Conv1 kernel size: 3×3
+  - Output tensor: 26×26×16
+  - CMSIS-NN status: 0 (success)
+  - Output sample: non-zero and varied
+  - Saturation count: +127=0, -128=0
+
+- Key fixes made:
+  - Replaced raw int8 image storage with uint8 input + explicit conversion
+  - Corrected input mapping to avoid signed overflow issues
+  - Updated Conv1 bias to larger properly scaled int32 values
+  - Reduced output saturation using smaller temporary multiplier
+
+- Observations:
+  - Real exported Conv1 weights now execute successfully on STM32
+  - Output is no longer dominated by clipping
+  - Layer behavior is structurally correct and numerically stable
+  - Output quantization is still approximate and not yet fully calibrated
+
+- Key takeaway:
+  - PyTorch Conv1 weights can be transferred into CMSIS-NN and executed correctly on STM32
+  - Correct input representation and bias scaling are critical for meaningful output
+
+- Conclusion:
+  - First real CNN layer has been successfully validated using CMSIS-NN on STM32
+  - System is ready to move toward multi-layer chaining and pipeline building
+
+- Commit message:
+  Integrated real Conv1 weights into CMSIS-NN pipeline and validated first CNN layer on STM32
