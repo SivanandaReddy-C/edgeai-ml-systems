@@ -102,30 +102,6 @@ int main(void)
       printf("%d ", input[i]);
   }
   printf("\r\n");
-
-
-  int8_t x[3] = {10, 20, -30};
-  int8_t w[3] = {2, -1, 3};
-  int32_t acc = 0;
-
-  // Dot product
-  for (int i = 0; i < 3; i++) {
-      acc += x[i] * w[i];
-  }
-
-  // Add bias
-  int32_t bias = 10;
-  acc += bias;
-
-  // Requantize (simple scaling)
-  int32_t scale = 4;
-  int32_t y = acc / scale;
-
-  // Clamp
-  if (y > 127) y = 127;
-  if (y < -128) y = -128;
-
-  printf("Output: %ld\r\n", y);
   /* USER CODE END 2 */
 
   /* Infinite loop */
