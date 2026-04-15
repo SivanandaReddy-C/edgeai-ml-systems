@@ -500,7 +500,7 @@ Successfully executed inference on STM32:
 
 ---
 
-# 🔥 Phase 3 — Extended System Analysis
+## 🔥 Phase 3 — Extended System Analysis
 
 This section extends Phase 3 beyond deployment into **detailed system-level evaluation** using real STM32 execution data.
 
@@ -630,7 +630,7 @@ Tested with:
 ---
 
 ## 🔥 Phase 3 Key Achievement
-> End-to-end pipeline validated:
+> End-to-end pipeline validated:  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PyTorch → ONNX → Cube.AI → STM32 → UART → System Analysis
 
 --- 

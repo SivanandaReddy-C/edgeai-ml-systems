@@ -572,44 +572,44 @@
   ],
   "environment": {
     "generated_model": {
-      "generated_time": "2026-04-14T11:06:10+0530",
+      "generated_time": "2026-04-15T11:07:01+0530",
       "model_files": [
         {
           "name": "network_data_params.h",
-          "signature": "0xa0433b1ab8a2b4d0cda76cbe2979db5e"
+          "signature": "0xc882dcadcfacd1a00cf81feecde70313"
         },
         {
           "name": "network_data_params.c",
-          "signature": "0x5cb5f52aad953dd1d3b6e77118d35b8f"
+          "signature": "0x031dfed44495d782a509dcd347589176"
         },
         {
           "name": "network_data.h",
-          "signature": "0x851c02ec2179322734253284fd3261ab"
+          "signature": "0x4d53cd9137882e7c33ac75b0ec7e51a8"
         },
         {
           "name": "network_data.c",
-          "signature": "0x7b5712f3abfb0afb6a35e4f2f73eba69"
+          "signature": "0x3fbb870043169622b17be1d0232d5d46"
         },
         {
           "name": "network_config.h",
-          "signature": "0x6f585af44e8fac6ea286cd34ae799a87"
+          "signature": "0x874906c940fe8dc0067d0df958ff6bc8"
         },
         {
           "name": "network.h",
-          "signature": "0xa6c277e3c3edd1bcf40bb41d4b660af0"
+          "signature": "0xc7d18dab25677dc06262890b91a9438f"
         },
         {
           "name": "network.c",
-          "signature": "0xeb39ed0880d51cd059bc03d54aa80778"
+          "signature": "0x160daeaaff9ff2cac65f9ff6ef083114"
         }
       ],
       "name": "network"
     },
-    "network_signature": "0x84906ca7e20c5772",
+    "network_signature": "0xdfc15e9bc35a273d",
     "test_name": "",
     "tools": [
       {
-        "arguments": "generate --target stm32l4 --name network -m C:/Users/MIT/Documents/edgeai-ml-systems-phase1/phase2/onnx/cnn.onnx --compression none --verbosity 1 --workspace C:/Users/MIT/AppData/Local/Temp/mxAI_workspace84945541643900518957707993892150 --output C:/Users/MIT/.stm32cubemx/network_output",
+        "arguments": "generate --target stm32l4 --name network -m C:/Users/MIT/Documents/edgeai-ml-systems-phase1/phase2/onnx/cnn.onnx --compression none --verbosity 1 --workspace C:/Users/MIT/AppData/Local/Temp/mxAI_workspace17139353500480012717399479427407493 --output C:/Users/MIT/.stm32cubemx/network_output",
         "environment": [
           "STATS_TYPE=X-CUBE-AI"
         ],

@@ -1,10 +1,10 @@
-11:06:46 **** Incremental Build of configuration Debug for project CNN ****
+11:12:30 **** Incremental Build of configuration Debug for project CNN ****
 make -j28 all 
 arm-none-eabi-size  CNN.elf 
    text	   data	    bss	    dec	    hex	filename
- 879028	   3056	   4784	 886868	  d8854	CNN.elf
+ 880268	   3088	   7136	 890492	  d967c	CNN.elf
 Finished building: default.size.stdout
  
 
-11:06:46 Build Finished. 0 errors, 0 warnings. (took 334ms)
+11:12:31 Build Finished. 0 errors, 0 warnings. (took 341ms)
 

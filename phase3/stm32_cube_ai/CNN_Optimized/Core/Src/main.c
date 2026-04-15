@@ -77,56 +77,18 @@ static const uint8_t digit_image[28 * 28] = {
 		0,0,0,0,0,0,0,0,0,0,121,254,207,18,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 		0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 		};
-
-/* Stress-test images */
-static uint8_t zero_image[28 * 28];
-static uint8_t max_image[28 * 28];
-static uint8_t noise_image[28 * 28];
-
-/* Test labels for UART print only */
-static const char *test_names[] = {
-    "MNIST_SAMPLE",
-    "ALL_ZERO",
-    "ALL_255",
-    "NOISE"
-};
-
-/* Test pointers */
-static const uint8_t *test_images[] = {
-    digit_image,
-    zero_image,
-    max_image,
-    noise_image
-};
-
-/* Total number of test cases */
-#define NUM_TEST_IMAGES 4
-
-/* Number of repeated inferences per test image */
-#define STRESS_RUNS 200
-
-/* UART print interval between test rounds */
-#define TEST_DELAY_MS 1000
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART1_UART_Init(void);
-
 /* USER CODE BEGIN PFP */
-void DWT_Init(void);
-void preprocess_input(const uint8_t *src, ai_float *dst, uint32_t size);
-int argmax(const ai_float *data, uint32_t size);
-void init_test_images(void);
-void generate_noise_image(uint8_t *dst, uint32_t size);
-uint32_t run_stress_test(ai_handle network, const uint8_t *image, const char *name);
-/* USER CODE END PFP */
 
+/* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
 void DWT_Init(void)
 {
     CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
@@ -153,93 +115,6 @@ int argmax(const ai_float *data, uint32_t size)
         }
     }
     return max_idx;
-}
-
-/* Simple deterministic pseudo-random pattern generator
-   Keeps results repeatable across runs. */
-void generate_noise_image(uint8_t *dst, uint32_t size)
-{
-    uint32_t seed = 12345U;
-    for (uint32_t i = 0; i < size; i++) {
-        seed = (1103515245U * seed + 12345U);
-        dst[i] = (uint8_t)((seed >> 16) & 0xFF);
-    }
-}
-
-void init_test_images(void)
-{
-    memset(zero_image, 0, sizeof(zero_image));
-    memset(max_image, 255, sizeof(max_image));
-    generate_noise_image(noise_image, sizeof(noise_image));
-}
-
-uint32_t run_stress_test(ai_handle network, const uint8_t *image, const char *name)
-{
-    ai_i32 n_batch;
-    ai_float input_data[28 * 28];
-    ai_float output_data[10];
-
-    ai_buffer *ai_input = ai_network_inputs_get(network, NULL);
-    ai_buffer *ai_output = ai_network_outputs_get(network, NULL);
-
-    uint32_t total_cycles = 0;
-    uint32_t failed_runs = 0;
-    uint32_t invalid_outputs = 0;
-    int first_pred = -1;
-    uint32_t changed_pred_count = 0;
-
-    preprocess_input(image, input_data, 28 * 28);
-
-    ai_input[0].data = AI_HANDLE_PTR(input_data);
-    ai_output[0].data = AI_HANDLE_PTR(output_data);
-
-    for (uint32_t r = 0; r < STRESS_RUNS; r++) {
-
-        uint32_t start = DWT->CYCCNT;
-        n_batch = ai_network_run(network, ai_input, ai_output);
-        uint32_t end = DWT->CYCCNT;
-
-        total_cycles += (end - start);
-
-        if (n_batch != 1) {
-            failed_runs++;
-            continue;
-        }
-
-        /* Basic output sanity check:
-           reject NaN by testing x != x */
-        for (int i = 0; i < 10; i++) {
-            if (output_data[i] != output_data[i]) {
-                invalid_outputs++;
-                break;
-            }
-        }
-
-        int pred = argmax(output_data, 10);
-
-        if (r == 0) {
-            first_pred = pred;
-        } else {
-            if (pred != first_pred) {
-                changed_pred_count++;
-            }
-        }
-    }
-
-    SystemCoreClockUpdate();
-    float avg_cycles = (float)total_cycles / (float)STRESS_RUNS;
-    float avg_ms = (avg_cycles * 1000.0f) / (float)SystemCoreClock;
-
-    printf("\r\n=== Stress Test: %s ===\r\n", name);
-    printf("Runs               : %lu\r\n", (unsigned long)STRESS_RUNS);
-    printf("Failed runs        : %lu\r\n", (unsigned long)failed_runs);
-    printf("Invalid outputs    : %lu\r\n", (unsigned long)invalid_outputs);
-    printf("Prediction changes : %lu\r\n", (unsigned long)changed_pred_count);
-    printf("Reference pred     : %d\r\n", first_pred);
-    printf("Avg cycles         : %.2f\r\n", avg_cycles);
-    printf("Avg latency        : %.3f ms\r\n", avg_ms);
-
-    return failed_runs + invalid_outputs + changed_pred_count;
 }
 
 /* USER CODE END 0 */
@@ -277,7 +152,6 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART1_UART_Init();
-
   /* USER CODE BEGIN 2 */
   setvbuf(stdout, NULL, _IONBF, 0);
   printf("UART PRINTF OK\r\n");
@@ -289,9 +163,6 @@ int main(void)
   printf("CFGR = 0x%08lX\r\n", RCC->CFGR);
   printf("SystemCoreClock = %lu Hz\r\n", SystemCoreClock);
   printf("HCLK = %lu Hz\r\n", HAL_RCC_GetHCLKFreq());
-
-  init_test_images();
-  printf("Test images initialized\r\n");
 
   ai_error err;
 
@@ -316,7 +187,6 @@ int main(void)
   printf("AI initialized\r\n");
   /* USER CODE END 2 */
 
-
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
@@ -324,23 +194,50 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  ai_i32 n_batch;
+	  ai_float input_data[28 * 28];
+	  ai_float output_data[10];
 
-	  uint32_t total_issues = 0;
+	  preprocess_input(digit_image, input_data, 28 * 28);
 
-	  for (uint32_t i = 0; i < NUM_TEST_IMAGES; i++) {
-	      total_issues += run_stress_test(network, test_images[i], test_names[i]);
-	  }
+	  ai_buffer *ai_input = ai_network_inputs_get(network, NULL);
+	  ai_buffer *ai_output = ai_network_outputs_get(network, NULL);
 
-	  printf("\r\n=== Day 12 Summary ===\r\n");
-	  printf("Total issue count: %lu\r\n", (unsigned long)total_issues);
+	  ai_input[0].data = AI_HANDLE_PTR(input_data);
+	  ai_output[0].data = AI_HANDLE_PTR(output_data);
 
-	  if (total_issues == 0) {
-	      printf("Stress test status: PASS\r\n");
+	  uint32_t start, end, cycles;
+	  float time_ms, time_us;
+
+	  start = DWT->CYCCNT;
+	  n_batch = ai_network_run(network, ai_input, ai_output);
+	  end = DWT->CYCCNT;
+
+	  cycles = end - start;
+
+	  SystemCoreClockUpdate();
+	  time_ms = ((float)cycles * 1000.0f) / (float)SystemCoreClock;
+	  time_us = ((float)cycles * 1000000.0f) / (float)SystemCoreClock;
+
+	  printf("n_batch = %ld\r\n", (long)n_batch);
+
+	  if (n_batch != 1) {
+	      ai_error run_err = ai_network_get_error(network);
+	      printf("AI run failed: type=%d code=%d\r\n", run_err.type, run_err.code);
 	  } else {
-	      printf("Stress test status: CHECK FAILURES\r\n");
+	      int pred = argmax(output_data, 10);
+
+	      printf("Inference done\r\n");
+	      printf("Predicted digit: %d\r\n", pred);
+	      printf("Latency: %lu cycles | %.3f ms | %.1f us\r\n", cycles, time_ms, time_us);
+
+	      for (int i = 0; i < 10; i++) {
+	          printf("%0.6f ", output_data[i]);
+	      }
+	      printf("\r\n");
 	  }
 
-	  HAL_Delay(TEST_DELAY_MS);
+	  HAL_Delay(1000);
   }
   /* USER CODE END 3 */
 }
