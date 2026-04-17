@@ -144,8 +144,6 @@ int main(void)
 
     /* Output: 1 x 26 x 26 x 16 */
     int8_t output_data[26 * 26 * 16] = {0};
-    int8_t relu_out[26 * 26 * 16] = {0};
-    int8_t pool_out[13 * 13 * 16] = {0};
 
     /* Per-channel quant params (temporary near-identity for sanity test) */
     int32_t multiplier[16] = {
@@ -218,67 +216,16 @@ int main(void)
     	    if (output_data[i] == -128) sat_neg++;
     	}
     	printf("Saturation count: +127=%d, -128=%d\r\n", sat_pos, sat_neg);
-
-    	for (int i = 0; i < 26 * 26 * 16; i++) {
-    	    relu_out[i] = (output_data[i] < 0) ? 0 : output_data[i];
-    	}
-
-    	printf("ReLU output sample:\r\n");
-    	for (int i = 0; i < 40; i++) {
-    	    printf("%d ", relu_out[i]);
-    	}
-    	printf("\r\n");
-
-    	for (int ch = 0; ch < 16; ch++) {
-    	    for (int oh = 0; oh < 13; oh++) {
-    	        for (int ow = 0; ow < 13; ow++) {
-
-    	            int ih = oh * 2;
-    	            int iw = ow * 2;
-
-    	            int idx0 = (ih * 26 + iw) * 16 + ch;
-    	            int idx1 = (ih * 26 + (iw + 1)) * 16 + ch;
-    	            int idx2 = ((ih + 1) * 26 + iw) * 16 + ch;
-    	            int idx3 = ((ih + 1) * 26 + (iw + 1)) * 16 + ch;
-
-    	            int8_t max_val = relu_out[idx0];
-    	            if (relu_out[idx1] > max_val) max_val = relu_out[idx1];
-    	            if (relu_out[idx2] > max_val) max_val = relu_out[idx2];
-    	            if (relu_out[idx3] > max_val) max_val = relu_out[idx3];
-
-    	            int out_idx = (oh * 13 + ow) * 16 + ch;
-    	            pool_out[out_idx] = max_val;
-    	        }
-    	    }
-    	}
-
-    	printf("MaxPool output sample:\r\n");
-    	for (int i = 0; i < 40; i++) {
-    	    printf("%d ", pool_out[i]);
-    	}
-    	printf("\r\n");
-
-    	int conv1_max = -1000, conv1_min = 1000;
-    	for (int i = 0; i < 26 * 26 * 16; i++) {
-    	    if (output_data[i] > conv1_max) conv1_max = output_data[i];
-    	    if (output_data[i] < conv1_min) conv1_min = output_data[i];
-    	}
-    	printf("Conv1 Min: %d, Max: %d\r\n", conv1_min, conv1_max);
-
-    	int relu_max = -1000, relu_min = 1000;
-    	for (int i = 0; i < 26 * 26 * 16; i++) {
-    	    if (relu_out[i] > relu_max) relu_max = relu_out[i];
-    	    if (relu_out[i] < relu_min) relu_min = relu_out[i];
-    	}
-    	printf("ReLU Min: %d, Max: %d\r\n", relu_min, relu_max);
-
-    	int pool_max = -1000, pool_min = 1000;
-    	for (int i = 0; i < 13 * 13 * 16; i++) {
-    	    if (pool_out[i] > pool_max) pool_max = pool_out[i];
-    	    if (pool_out[i] < pool_min) pool_min = pool_out[i];
-    	}
-    	printf("MaxPool Min: %d, Max: %d\r\n", pool_min, pool_max);
     }
+
+    int max_val = -1000, min_val = 1000;
+
+    for (int i = 0; i < 26 * 26 * 16; i++) {
+        if (output_data[i] > max_val) max_val = output_data[i];
+        if (output_data[i] < min_val) min_val = output_data[i];
+    }
+
+    printf("Min: %d, Max: %d\r\n", min_val, max_val);
   /* USER CODE END 2 */
 
   /* Infinite loop */

@@ -130,7 +130,71 @@ Day 18 Complete:
 - Commit message:
   Integrated real Conv1 weights into CMSIS-NN pipeline and validated first CNN layer on STM32
 
-# Day 19 
+# Day 19 - Requantization Fix for Conv1 (STM32 CMSIS-NN)
 ## 🎯 Goal
-Make Conv1 output numerically meaningful by implementing correct requantization (multiplier + shift)
-- (int32 accumulator → correct int8 output)
+
+Implement correct requantization (multiplier + shift) so that Conv1 output is:
+
+- numerically meaningful
+- non-zero
+- non-saturated
+- stable for further layers
+
+## Completion report:
+Day 19 Complete:
+
+- Implemented proper multiplier and shift computation for requantization
+- Fixed shift convention bug (positive → correct signed shift)
+- Tuned output_scale to 4.0 / 127.0 to avoid saturation
+- Conv1 output now stable, non-zero, and non-saturated
+
+Results:
+- Conv1 status: 0
+- Output sample: structured signed values
+- Min/Max: -40 / 47
+- Saturation: +127 = 0, -128 = 0
+
+Key Learning:
+- Understood full requantization pipeline (int32 → int8)
+- Identified impact of output_scale on dynamic range
+- Validated CMSIS-NN quantized conv layer numerically
+
+Next:
+- Prepare for layer chaining (Conv2 / pipeline building)
+
+# Day 20 - Build Minimal Inference Pipeline (Conv1 → ReLU → Pool)
+## 🎯 Goal
+Extend your working Conv1 block into a small but real inference pipeline by adding:
+
+- ReLU
+- MaxPool
+- output inspection after each stage  
+
+By the end of today, you should have a stable mini-pipeline:  
+Input → Conv1 → ReLU → MaxPool
+
+## Completion report
+Day 20 Complete:
+- Extended single Conv1 execution into a minimal inference pipeline
+- Implemented ReLU on Conv1 int8 output
+- Implemented 2x2 MaxPool with stride 2
+- Verified output flow across Conv1 → ReLU → MaxPool on STM32
+
+Results:
+- Conv1 status: 0
+- Conv1 output sample: structured signed values observed
+- ReLU output sample: all negative values removed correctly
+- MaxPool output sample: strongest local activations preserved
+- Conv1 Min/Max: -40 / 47
+- ReLU Min/Max: 0 / 47
+- MaxPool Min/Max: 0 / 47
+
+Observations:
+- ReLU behaved correctly by clipping all negative activations to zero
+- MaxPool reduced spatial information while preserving strong responses
+- Chained stage execution remained stable and non-saturated
+
+Key Learning:
+- Validated tensor flow across multiple stages in STM32 CMSIS-NN pipeline
+- Confirmed stable value propagation from quantized convolution to downstream ops
+- Established a clean base for adding Conv2 next
