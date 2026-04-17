@@ -198,3 +198,37 @@ Key Learning:
 - Validated tensor flow across multiple stages in STM32 CMSIS-NN pipeline
 - Confirmed stable value propagation from quantized convolution to downstream ops
 - Established a clean base for adding Conv2 next
+
+# Day 21 - Add Conv2 After MaxPool
+## 🎯 Goal
+Extend your current mini-pipeline to:  
+Input → Conv1 → ReLU → MaxPool → Conv2  
+By the end of today, you should have:
+
+- Conv2 weights exported from Python
+- Conv2 input dimensions correctly set from pooled output
+- Conv2 running on STM32
+- Conv2 output printed and range-checked
+
+## Completion Report:
+Day 21 Complete:
+
+- Integrated Conv2 into CMSIS-NN pipeline using pooled Conv1 output
+- Exported Conv2 weights, bias, multiplier, and shift from Python
+- Implemented Conv2 execution in STM32 main.c
+
+Results:
+- Conv2 status: 0
+- Output sample: structured signed values observed
+- Min/Max: -106 / 80
+- Saturation: +127 = 0, -128 = 0
+
+Observations:
+- Initial saturation issue resolved by increasing output scale
+- Conv2 output now stable and non-clipped
+- Multi-layer inference pipeline functioning correctly
+
+Key Learning:
+- Each layer requires independent output scale tuning
+- Conv2 introduces deeper feature distribution requiring careful scaling
+- Validated full 2-layer quantized CNN pipeline on STM32
