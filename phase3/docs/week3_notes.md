@@ -129,3 +129,8 @@ Day 18 Complete:
 
 - Commit message:
   Integrated real Conv1 weights into CMSIS-NN pipeline and validated first CNN layer on STM32
+
+# Day 19 
+## 🎯 Goal
+Make Conv1 output numerically meaningful by implementing correct requantization (multiplier + shift)
+- (int32 accumulator → correct int8 output)

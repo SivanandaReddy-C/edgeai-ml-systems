@@ -146,13 +146,12 @@ int main(void)
     int8_t output_data[26 * 26 * 16] = {0};
 
     /* Per-channel quant params (temporary near-identity for sanity test) */
-    int32_t multiplier[16];
-    int32_t shift[16];
-
-    for (int i = 0; i < 16; i++) {
-        multiplier[i] = 1 << 22;
-        shift[i] = 0;
-    }
+    int32_t multiplier[16] = {
+    		1436681740,1436681740,1436681740,1436681740,1436681740,1436681740,1436681740,1436681740,1436681740,1436681740,1436681740,1436681740,1436681740,1436681740,1436681740,1436681740
+    		};
+    int32_t shift[16] = {
+    		-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9
+    		};
 
     /* Scratch buffer */
     int16_t bufferA[2000];
@@ -218,6 +217,15 @@ int main(void)
     	}
     	printf("Saturation count: +127=%d, -128=%d\r\n", sat_pos, sat_neg);
     }
+
+    int max_val = -1000, min_val = 1000;
+
+    for (int i = 0; i < 26 * 26 * 16; i++) {
+        if (output_data[i] > max_val) max_val = output_data[i];
+        if (output_data[i] < min_val) min_val = output_data[i];
+    }
+
+    printf("Min: %d, Max: %d\r\n", min_val, max_val);
   /* USER CODE END 2 */
 
   /* Infinite loop */
