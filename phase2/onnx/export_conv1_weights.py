@@ -13,7 +13,7 @@ def main():
     b = model.conv1.bias.data.numpy()
 
     # Input scale for uint8[0..255] mapped to int8[-128..127]
-    input_scale = 1.0 / 255.0
+    input_scale = 1.0 / 127.0
 
     # Weight scale
     weight_scale = np.max(np.abs(w)) / 127.0
