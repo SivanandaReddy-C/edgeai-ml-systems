@@ -232,3 +232,41 @@ Key Learning:
 - Each layer requires independent output scale tuning
 - Conv2 introduces deeper feature distribution requiring careful scaling
 - Validated full 2-layer quantized CNN pipeline on STM32
+
+# Day 22 - Extend Pipeline After Conv2
+## 🎯 Goal
+Extend your current working path to:  
+Input → Conv1 → ReLU → MaxPool → Conv2 → ReLU → MaxPool  
+
+By the end of today, you should have:
+- ReLU applied to Conv2 output
+- 2×2 MaxPool applied to Conv2-ReLU output
+- printed sample outputs for both stages
+- min/max checks for both stages
+
+## Completion Report:
+Day 22 Complete:
+
+- Added ReLU after Conv2 output
+- Added 2x2 MaxPool after Conv2 ReLU output
+- Verified stable multi-stage pipeline execution on STM32
+
+Results:
+- Conv2 status: 0
+- Conv2 output sample: structured signed values
+- Conv2 ReLU output: negatives removed correctly
+- Conv2 MaxPool output: strong activations preserved
+
+- Conv2 Min/Max: -106 / 80
+- Conv2 ReLU Min/Max: 0 / 80
+- Conv2 MaxPool Min/Max: 0 / 80
+
+Observations:
+- Pipeline stable across all stages
+- No saturation observed in deeper layers
+- Feature sparsity visible after ReLU, expected behavior
+
+Key Learning:
+- Verified full multi-layer CNN feature flow on STM32
+- Confirmed correctness of indexing across deeper feature maps
+- Established foundation for final classification layers

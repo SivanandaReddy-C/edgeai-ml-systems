@@ -167,6 +167,8 @@ int main(void)
     int8_t relu_out[26 * 26 * 16] = {0};
     int8_t pool_out[13 * 13 * 16] = {0};
     int8_t conv2_out[11 * 11 * 32] = {0};
+    int8_t conv2_relu_out[11 * 11 * 32] = {0};
+    int8_t conv2_pool_out[5 * 5 * 32] = {0};
 
     /* Per-channel quant params (temporary near-identity for sanity test) */
 
@@ -342,6 +344,45 @@ int main(void)
     	    }
     	    printf("\r\n");
 
+    	    for (int i = 0; i < 11 * 11 * 32; i++) {
+    	        conv2_relu_out[i] = (conv2_out[i] < 0) ? 0 : conv2_out[i];
+    	    }
+
+    	    printf("Conv2 ReLU output sample:\r\n");
+    	    for (int i = 0; i < 40; i++) {
+    	        printf("%d ", conv2_relu_out[i]);
+    	    }
+    	    printf("\r\n");
+
+    	    for (int ch = 0; ch < 32; ch++) {
+    	        for (int oh = 0; oh < 5; oh++) {
+    	            for (int ow = 0; ow < 5; ow++) {
+
+    	                int ih = oh * 2;
+    	                int iw = ow * 2;
+
+    	                int idx0 = (ih * 11 + iw) * 32 + ch;
+    	                int idx1 = (ih * 11 + (iw + 1)) * 32 + ch;
+    	                int idx2 = ((ih + 1) * 11 + iw) * 32 + ch;
+    	                int idx3 = ((ih + 1) * 11 + (iw + 1)) * 32 + ch;
+
+    	                int8_t max_val = conv2_relu_out[idx0];
+    	                if (conv2_relu_out[idx1] > max_val) max_val = conv2_relu_out[idx1];
+    	                if (conv2_relu_out[idx2] > max_val) max_val = conv2_relu_out[idx2];
+    	                if (conv2_relu_out[idx3] > max_val) max_val = conv2_relu_out[idx3];
+
+    	                int out_idx = (oh * 5 + ow) * 32 + ch;
+    	                conv2_pool_out[out_idx] = max_val;
+    	            }
+    	        }
+    	    }
+
+    	    printf("Conv2 MaxPool output sample:\r\n");
+    	    for (int i = 0; i < 40; i++) {
+    	        printf("%d ", conv2_pool_out[i]);
+    	    }
+    	    printf("\r\n");
+
     	    int conv2_sat_pos = 0, conv2_sat_neg = 0;
     	    for (int i = 0; i < 11 * 11 * 32; i++) {
     	        if (conv2_out[i] == 127) conv2_sat_pos++;
@@ -355,6 +396,20 @@ int main(void)
     	        if (conv2_out[i] < conv2_min) conv2_min = conv2_out[i];
     	    }
     	    printf("Conv2 Min: %d, Max: %d\r\n", conv2_min, conv2_max);
+
+    	    int conv2_relu_max = -1000, conv2_relu_min = 1000;
+    	    for (int i = 0; i < 11 * 11 * 32; i++) {
+    	        if (conv2_relu_out[i] > conv2_relu_max) conv2_relu_max = conv2_relu_out[i];
+    	        if (conv2_relu_out[i] < conv2_relu_min) conv2_relu_min = conv2_relu_out[i];
+    	    }
+    	    printf("Conv2 ReLU Min: %d, Max: %d\r\n", conv2_relu_min, conv2_relu_max);
+
+    	    int conv2_pool_max = -1000, conv2_pool_min = 1000;
+    	    for (int i = 0; i < 5 * 5 * 32; i++) {
+    	        if (conv2_pool_out[i] > conv2_pool_max) conv2_pool_max = conv2_pool_out[i];
+    	        if (conv2_pool_out[i] < conv2_pool_min) conv2_pool_min = conv2_pool_out[i];
+    	    }
+    	    printf("Conv2 MaxPool Min: %d, Max: %d\r\n", conv2_pool_min, conv2_pool_max);
     	}
     }
   /* USER CODE END 2 */

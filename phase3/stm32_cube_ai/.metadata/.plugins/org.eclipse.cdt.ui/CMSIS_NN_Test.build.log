@@ -1,10 +1,10 @@
-15:51:43 **** Incremental Build of configuration Debug for project CMSIS_NN_Test ****
+16:19:38 **** Incremental Build of configuration Debug for project CMSIS_NN_Test ****
 make -j28 all 
 arm-none-eabi-size  CMSIS_NN_Test.elf 
    text	   data	    bss	    dec	    hex	filename
-  47892	    104	   2056	  50052	   c384	CMSIS_NN_Test.elf
+  49800	    104	   2056	  51960	   caf8	CMSIS_NN_Test.elf
 Finished building: default.size.stdout
  
 
-15:51:44 Build Finished. 0 errors, 0 warnings. (took 599ms)
+16:19:38 Build Finished. 0 errors, 0 warnings. (took 586ms)
 
