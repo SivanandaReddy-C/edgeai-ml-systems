@@ -82,6 +82,52 @@ def quantize_conv_layer(weights, bias, input_scale, output_scale, layer_name):
     print(f"/* {layer_name} shift        = {shift} */")
     print()
 
+def quantize_linear_layer(weights, bias, input_scale, output_scale, layer_name):
+    """
+    weights: numpy array of shape [out_features, in_features]
+    bias:    numpy array of shape [out_features]
+    """
+
+    weight_scale = np.max(np.abs(weights)) / 127.0
+    if weight_scale == 0:
+        weight_scale = 1e-8
+
+    weights_q = np.round(weights / weight_scale).astype(np.int8)
+
+    bias_scale = input_scale * weight_scale
+    bias_q = np.round(bias / bias_scale).astype(np.int32)
+
+    effective_scale = bias_scale / output_scale
+    multiplier, shift = get_multiplier_shift(effective_scale)
+
+    weights_flat = weights_q.flatten()
+    bias_flat = bias_q.flatten()
+
+    print(f"/* ===== {layer_name.upper()} ===== */")
+
+    print(f"int8_t {layer_name}_weights[{len(weights_flat)}] = {{")
+    print(",".join(map(str, weights_flat)))
+    print("};\n")
+
+    print(f"int32_t {layer_name}_bias[{len(bias_flat)}] = {{")
+    print(",".join(map(str, bias_flat)))
+    print("};\n")
+
+    print(f"int32_t {layer_name}_multiplier[{len(bias_flat)}] = {{")
+    print(",".join([str(multiplier)] * len(bias_flat)))
+    print("};\n")
+
+    print(f"int32_t {layer_name}_shift[{len(bias_flat)}] = {{")
+    print(",".join([str(shift)] * len(bias_flat)))
+    print("};\n")
+
+    print(f"/* {layer_name} input_scale  = {input_scale} */")
+    print(f"/* {layer_name} weight_scale = {weight_scale} */")
+    print(f"/* {layer_name} output_scale = {output_scale} */")
+    print(f"/* {layer_name} eff_scale    = {effective_scale} */")
+    print(f"/* {layer_name} multiplier   = {multiplier} */")
+    print(f"/* {layer_name} shift        = {shift} */")
+    print()
 
 def main():
     # Load trained model
@@ -133,6 +179,43 @@ def main():
         input_scale=conv2_input_scale,
         output_scale=conv2_output_scale,
         layer_name="conv2"
+    )
+
+        # -----------------------------
+    # FC1 scales
+    # -----------------------------
+    # Conv2 pool output is the input to FC1
+    fc1_input_scale = conv2_output_scale
+
+    # Temporary output scale for FC1
+    fc1_output_scale = 8.0 / 127.0
+
+    fc1_w = model.fc1.weight.detach().cpu().numpy()
+    fc1_b = model.fc1.bias.detach().cpu().numpy()
+
+    quantize_linear_layer(
+        weights=fc1_w,
+        bias=fc1_b,
+        input_scale=fc1_input_scale,
+        output_scale=fc1_output_scale,
+        layer_name="fc1"
+    )
+
+    # -----------------------------
+    # FC2 scales
+    # -----------------------------
+    fc2_input_scale = fc1_output_scale
+    fc2_output_scale = 8.0 / 127.0
+
+    fc2_w = model.fc2.weight.detach().cpu().numpy()
+    fc2_b = model.fc2.bias.detach().cpu().numpy()
+
+    quantize_linear_layer(
+        weights=fc2_w,
+        bias=fc2_b,
+        input_scale=fc2_input_scale,
+        output_scale=fc2_output_scale,
+        layer_name="fc2"
     )
 
 

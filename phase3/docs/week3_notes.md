@@ -270,3 +270,48 @@ Key Learning:
 - Verified full multi-layer CNN feature flow on STM32
 - Confirmed correctness of indexing across deeper feature maps
 - Established foundation for final classification layers
+
+# Day 23 - Add Flatten + Fully Connected Layers
+## 🎯 Goal
+Extend your current working STM32 pipeline to the full CNN inference path:  
+Input → Conv1 → ReLU → MaxPool → Conv2 → ReLU → MaxPool → Flatten → FC1 → ReLU → FC2  
+By the end of today, you should have:
+
+- FC1 weights and bias exported from Python
+- FC2 weights and bias exported from Python
+- flattened Conv2 pooled output
+- FC1 run on STM32
+- ReLU after FC1
+- FC2 run on STM32
+- final 10 logits printed
+
+## Completion report
+Day 23 Complete:
+
+- Exported FC1 and FC2 quantized parameters from Python
+- Added flatten stage after Conv2 MaxPool
+- Implemented FC1 + ReLU + FC2 on STM32
+- Produced final 10-class logits and predicted class on-device
+
+Results:
+- Flatten output sample: valid pooled feature vector observed
+- FC1 output sample: structured signed values
+- FC1 ReLU output sample: negatives removed correctly
+- FC2 logits: -12 -11 8 -25 9 -26 -25 -5 -9 -15
+- Predicted class: 4
+
+Ranges:
+- FC1 Min/Max: -62 / 70
+- FC1 ReLU Min/Max: 0 / 70
+- FC2 Min/Max: -26 / 9
+
+Observations:
+- Full CNN inference path executed successfully on STM32
+- Fully connected layers are numerically stable
+- End-to-end classification output is now available on hardware
+
+Key Learning:
+- Completed full quantized CNN deployment pipeline on STM32
+- Verified transition from convolutional features to final logits on-device
+- Established a strong base for PyTorch vs STM32 comparison next
+
