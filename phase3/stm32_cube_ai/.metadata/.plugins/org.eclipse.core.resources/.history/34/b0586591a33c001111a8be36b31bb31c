@@ -77,7 +77,17 @@ void linear_s8(
             acc += input[i] * weights[o * in_features + i];
         }
 
+        if (o == 0) {
+            printf("FC DEBUG pre-req acc[%d] = %ld\r\n", o, (long)acc);
+            printf("FC DEBUG multiplier[%d] = %ld\r\n", o, (long)multiplier[o]);
+            printf("FC DEBUG shift[%d] = %ld\r\n", o, (long)shift[o]);
+        }
+
         acc = arm_nn_requantize(acc, multiplier[o], shift[o]);
+
+        if (o == 0) {
+            printf("FC DEBUG post-req acc[%d] = %ld\r\n", o, (long)acc);
+        }
 
         if (acc < activation_min) acc = activation_min;
         if (acc > activation_max) acc = activation_max;
@@ -220,12 +230,12 @@ int main(void)
     }
 
 
-    /* Output: 1 x 28 x 28 x 16 */
+    /* Output: 1 x 26 x 26 x 16 */
     int8_t output_data[28 * 28 * 16] = {0};
-    int8_t relu_out[28 * 28 * 16] = {0};
-    int8_t pool_out[14 * 14 * 16] = {0};
+    int8_t relu_out[26 * 26 * 16] = {0};
+    int8_t pool_out[13 * 13 * 16] = {0};
     int8_t conv2_out[14 * 14 * 32] = {0};
-    int8_t conv2_relu_out[14 * 14 * 32] = {0};
+    int8_t conv2_relu_out[11 * 11 * 32] = {0};
     int8_t conv2_pool_out[7 * 7 * 32] = {0};
     int8_t flatten_out[7 * 7 * 32] = {0};
     int8_t fc1_out[128] = {0};
@@ -471,12 +481,21 @@ int main(void)
     	    }
     	    printf("Conv2 MaxPool Min: %d, Max: %d\r\n", conv2_pool_min, conv2_pool_max);
 
+    	    /* Reorder HWC -> CHW before FC1
+    	       conv2_pool_out currently uses:
+    	       index = (h * 5 + w) * 32 + ch
 
-    	    /* Direct copy before FC1
-    	       conv2_pool_out layout already matches the FC1 expected input order
+    	       PyTorch flatten after [1, 32, 5, 5] expects:
+    	       index = ch * 25 + h * 5 + w
     	    */
-    	    for (int i = 0; i < 7 * 7 * 32; i++) {
-    	        flatten_out[i] = conv2_pool_out[i];
+    	    for (int ch = 0; ch < 32; ch++) {
+    	        for (int h = 0; h < 7; h++) {
+    	            for (int w = 0; w < 7; w++) {
+    	                int src_idx = (h * 7 + w) * 32 + ch;
+    	                int dst_idx = ch * 49 + h * 7 + w;
+    	                flatten_out[dst_idx] = conv2_pool_out[src_idx];
+    	            }
+    	        }
     	    }
 
     	    printf("Flatten output sample:\r\n");

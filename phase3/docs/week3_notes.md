@@ -327,3 +327,38 @@ By the end of today, you should have:
 - side-by-side comparison against STM32 outputs
 - identification of the first mismatch stage
 
+## Completion report:
+Day 24 Complete:
+
+- Built Python integer reference matching STM32 quantized inference flow
+- Verified Conv1, Conv2, pooling, flatten, and FC1 integer path behavior
+- Confirmed STM32 and Python integer pipeline are aligned
+- Identified root cause of final prediction mismatch:
+  FC1 exported weights expect 1568 inputs, but STM32 currently provides only 800
+
+Key conclusion:
+- The remaining issue is architectural mismatch between trained model and deployed STM32 pipeline, not random scale tuning or UART/debug errors.
+
+# Day 25 - Fix Architecture Mismatch - Implement SAME CNN as Training (Padding = 1)
+## 🎯 Goal
+Make STM32 pipeline match trained model:
+28x28 → Conv(pad=1) → 28x28
+      → Pool → 14x14
+      → Conv(pad=1) → 14x14
+      → Pool → 7x7
+      → Flatten → 1568
+      → FC1(1568 → 128)
+      → FC2(128 → 10)
+
+## Completion report:
+Day 25 Complete:
+- Updated STM32 CNN path to match training architecture (28→14→7)
+- Fixed FC1 input size to 1568
+- Verified manual flatten reorder was incorrect
+- Replaced flatten reorder with direct copy from conv2_pool_out
+- Removed major layout mismatch between STM32 and PyTorch
+- Confirmed final STM32 predicted class matches PyTorch (class 7)
+
+Result:
+- End-to-end manual CMSIS-NN inference on STM32 is functionally working
+- Root deployment mismatch resolved

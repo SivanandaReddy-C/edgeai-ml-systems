@@ -77,7 +77,17 @@ void linear_s8(
             acc += input[i] * weights[o * in_features + i];
         }
 
+        if (o == 0) {
+            printf("FC DEBUG pre-req acc[%d] = %ld\r\n", o, (long)acc);
+            printf("FC DEBUG multiplier[%d] = %ld\r\n", o, (long)multiplier[o]);
+            printf("FC DEBUG shift[%d] = %ld\r\n", o, (long)shift[o]);
+        }
+
         acc = arm_nn_requantize(acc, multiplier[o], shift[o]);
+
+        if (o == 0) {
+            printf("FC DEBUG post-req acc[%d] = %ld\r\n", o, (long)acc);
+        }
 
         if (acc < activation_min) acc = activation_min;
         if (acc > activation_max) acc = activation_max;
@@ -220,14 +230,14 @@ int main(void)
     }
 
 
-    /* Output: 1 x 28 x 28 x 16 */
-    int8_t output_data[28 * 28 * 16] = {0};
-    int8_t relu_out[28 * 28 * 16] = {0};
-    int8_t pool_out[14 * 14 * 16] = {0};
-    int8_t conv2_out[14 * 14 * 32] = {0};
-    int8_t conv2_relu_out[14 * 14 * 32] = {0};
-    int8_t conv2_pool_out[7 * 7 * 32] = {0};
-    int8_t flatten_out[7 * 7 * 32] = {0};
+    /* Output: 1 x 26 x 26 x 16 */
+    int8_t output_data[26 * 26 * 16] = {0};
+    int8_t relu_out[26 * 26 * 16] = {0};
+    int8_t pool_out[13 * 13 * 16] = {0};
+    int8_t conv2_out[11 * 11 * 32] = {0};
+    int8_t conv2_relu_out[11 * 11 * 32] = {0};
+    int8_t conv2_pool_out[5 * 5 * 32] = {0};
+    int8_t flatten_out[5 * 5 * 32] = {0};
     int8_t fc1_out[128] = {0};
     int8_t fc1_relu_out[128] = {0};
     int8_t fc2_out[10] = {0};
@@ -246,16 +256,16 @@ int main(void)
     cmsis_nn_dims filter_dims  = {16, 3, 3, 1};
     cmsis_nn_dims bias_dims    = {16, 1, 1, 1};
     cmsis_nn_dims upscale_dims = {1, 1, 1, 1};
-    cmsis_nn_dims output_dims       = {1, 28, 28, 16};
-    cmsis_nn_dims conv2_input_dims  = {1, 14, 14, 16};
+    cmsis_nn_dims output_dims  = {1, 26, 26, 16};
+    cmsis_nn_dims conv2_input_dims  = {1, 13, 13, 16};
     cmsis_nn_dims conv2_filter_dims = {32, 3, 3, 16};
     cmsis_nn_dims conv2_bias_dims   = {32, 1, 1, 1};
-    cmsis_nn_dims conv2_output_dims = {1, 14, 14, 32};
+    cmsis_nn_dims conv2_output_dims = {1, 11, 11, 32};
 
     /* Convolution parameters */
     cmsis_nn_conv_params conv_params;
-    conv_params.padding.h = 1;
-    conv_params.padding.w = 1;
+    conv_params.padding.h = 0;
+    conv_params.padding.w = 0;
     conv_params.stride.h = 1;
     conv_params.stride.w = 1;
     conv_params.dilation.h = 1;
@@ -271,8 +281,8 @@ int main(void)
 
 
     cmsis_nn_conv_params conv2_params;
-    conv2_params.padding.h = 1;
-    conv2_params.padding.w = 1;
+    conv2_params.padding.h = 0;
+    conv2_params.padding.w = 0;
     conv2_params.stride.h = 1;
     conv2_params.stride.w = 1;
     conv2_params.dilation.h = 1;
@@ -314,13 +324,13 @@ int main(void)
     	printf("\r\n");
 
     	int sat_pos = 0, sat_neg = 0;
-    	for (int i = 0; i < 28 * 28 * 16; i++) {
+    	for (int i = 0; i < 26 * 26 * 16; i++) {
     	    if (output_data[i] == 127) sat_pos++;
     	    if (output_data[i] == -128) sat_neg++;
     	}
     	printf("Saturation count: +127=%d, -128=%d\r\n", sat_pos, sat_neg);
 
-    	for (int i = 0; i < 28 * 28 * 16; i++) {
+    	for (int i = 0; i < 26 * 26 * 16; i++) {
     	    relu_out[i] = (output_data[i] < 0) ? 0 : output_data[i];
     	}
 
@@ -331,22 +341,23 @@ int main(void)
     	printf("\r\n");
 
     	for (int ch = 0; ch < 16; ch++) {
-    	    for (int oh = 0; oh < 14; oh++) {
-    	        for (int ow = 0; ow < 14; ow++) {
+    	    for (int oh = 0; oh < 13; oh++) {
+    	        for (int ow = 0; ow < 13; ow++) {
+
     	            int ih = oh * 2;
     	            int iw = ow * 2;
 
-    	            int idx0 = (ih * 28 + iw) * 16 + ch;
-    	            int idx1 = (ih * 28 + (iw + 1)) * 16 + ch;
-    	            int idx2 = ((ih + 1) * 28 + iw) * 16 + ch;
-    	            int idx3 = ((ih + 1) * 28 + (iw + 1)) * 16 + ch;
+    	            int idx0 = (ih * 26 + iw) * 16 + ch;
+    	            int idx1 = (ih * 26 + (iw + 1)) * 16 + ch;
+    	            int idx2 = ((ih + 1) * 26 + iw) * 16 + ch;
+    	            int idx3 = ((ih + 1) * 26 + (iw + 1)) * 16 + ch;
 
     	            int8_t max_val = relu_out[idx0];
     	            if (relu_out[idx1] > max_val) max_val = relu_out[idx1];
     	            if (relu_out[idx2] > max_val) max_val = relu_out[idx2];
     	            if (relu_out[idx3] > max_val) max_val = relu_out[idx3];
 
-    	            int out_idx = (oh * 14 + ow) * 16 + ch;
+    	            int out_idx = (oh * 13 + ow) * 16 + ch;
     	            pool_out[out_idx] = max_val;
     	        }
     	    }
@@ -359,21 +370,21 @@ int main(void)
     	printf("\r\n");
 
     	int conv1_max = -1000, conv1_min = 1000;
-    	for (int i = 0; i < 28 * 28 * 16; i++) {
+    	for (int i = 0; i < 26 * 26 * 16; i++) {
     	    if (output_data[i] > conv1_max) conv1_max = output_data[i];
     	    if (output_data[i] < conv1_min) conv1_min = output_data[i];
     	}
     	printf("Conv1 Min: %d, Max: %d\r\n", conv1_min, conv1_max);
 
     	int relu_max = -1000, relu_min = 1000;
-    	for (int i = 0; i < 28 * 28 * 16; i++) {
+    	for (int i = 0; i < 26 * 26 * 16; i++) {
     	    if (relu_out[i] > relu_max) relu_max = relu_out[i];
     	    if (relu_out[i] < relu_min) relu_min = relu_out[i];
     	}
     	printf("ReLU Min: %d, Max: %d\r\n", relu_min, relu_max);
 
     	int pool_max = -1000, pool_min = 1000;
-    	for (int i = 0; i < 14 * 14 * 16; i++) {
+    	for (int i = 0; i < 13 * 13 * 16; i++) {
     	    if (pool_out[i] > pool_max) pool_max = pool_out[i];
     	    if (pool_out[i] < pool_min) pool_min = pool_out[i];
     	}
@@ -405,7 +416,7 @@ int main(void)
     	    }
     	    printf("\r\n");
 
-    	    for (int i = 0; i < 14 * 14 * 32; i++) {
+    	    for (int i = 0; i < 11 * 11 * 32; i++) {
     	        conv2_relu_out[i] = (conv2_out[i] < 0) ? 0 : conv2_out[i];
     	    }
 
@@ -416,22 +427,23 @@ int main(void)
     	    printf("\r\n");
 
     	    for (int ch = 0; ch < 32; ch++) {
-    	        for (int oh = 0; oh < 7; oh++) {
-    	            for (int ow = 0; ow < 7; ow++) {
+    	        for (int oh = 0; oh < 5; oh++) {
+    	            for (int ow = 0; ow < 5; ow++) {
+
     	                int ih = oh * 2;
     	                int iw = ow * 2;
 
-    	                int idx0 = (ih * 14 + iw) * 32 + ch;
-    	                int idx1 = (ih * 14 + (iw + 1)) * 32 + ch;
-    	                int idx2 = ((ih + 1) * 14 + iw) * 32 + ch;
-    	                int idx3 = ((ih + 1) * 14 + (iw + 1)) * 32 + ch;
+    	                int idx0 = (ih * 11 + iw) * 32 + ch;
+    	                int idx1 = (ih * 11 + (iw + 1)) * 32 + ch;
+    	                int idx2 = ((ih + 1) * 11 + iw) * 32 + ch;
+    	                int idx3 = ((ih + 1) * 11 + (iw + 1)) * 32 + ch;
 
     	                int8_t max_val = conv2_relu_out[idx0];
     	                if (conv2_relu_out[idx1] > max_val) max_val = conv2_relu_out[idx1];
     	                if (conv2_relu_out[idx2] > max_val) max_val = conv2_relu_out[idx2];
     	                if (conv2_relu_out[idx3] > max_val) max_val = conv2_relu_out[idx3];
 
-    	                int out_idx = (oh * 7 + ow) * 32 + ch;
+    	                int out_idx = (oh * 5 + ow) * 32 + ch;
     	                conv2_pool_out[out_idx] = max_val;
     	            }
     	        }
@@ -444,39 +456,48 @@ int main(void)
     	    printf("\r\n");
 
     	    int conv2_sat_pos = 0, conv2_sat_neg = 0;
-    	    for (int i = 0; i < 14 * 14 * 32; i++) {
+    	    for (int i = 0; i < 11 * 11 * 32; i++) {
     	        if (conv2_out[i] == 127) conv2_sat_pos++;
     	        if (conv2_out[i] == -128) conv2_sat_neg++;
     	    }
     	    printf("Conv2 Saturation count: +127=%d, -128=%d\r\n", conv2_sat_pos, conv2_sat_neg);
 
     	    int conv2_max = -1000, conv2_min = 1000;
-    	    for (int i = 0; i < 14 * 14 * 32; i++) {
+    	    for (int i = 0; i < 11 * 11 * 32; i++) {
     	        if (conv2_out[i] > conv2_max) conv2_max = conv2_out[i];
     	        if (conv2_out[i] < conv2_min) conv2_min = conv2_out[i];
     	    }
     	    printf("Conv2 Min: %d, Max: %d\r\n", conv2_min, conv2_max);
 
     	    int conv2_relu_max = -1000, conv2_relu_min = 1000;
-    	    for (int i = 0; i < 14 * 14 * 32; i++) {
+    	    for (int i = 0; i < 11 * 11 * 32; i++) {
     	        if (conv2_relu_out[i] > conv2_relu_max) conv2_relu_max = conv2_relu_out[i];
     	        if (conv2_relu_out[i] < conv2_relu_min) conv2_relu_min = conv2_relu_out[i];
     	    }
     	    printf("Conv2 ReLU Min: %d, Max: %d\r\n", conv2_relu_min, conv2_relu_max);
 
     	    int conv2_pool_max = -1000, conv2_pool_min = 1000;
-    	    for (int i = 0; i < 7 * 7 * 32; i++) {
+    	    for (int i = 0; i < 5 * 5 * 32; i++) {
     	        if (conv2_pool_out[i] > conv2_pool_max) conv2_pool_max = conv2_pool_out[i];
     	        if (conv2_pool_out[i] < conv2_pool_min) conv2_pool_min = conv2_pool_out[i];
     	    }
     	    printf("Conv2 MaxPool Min: %d, Max: %d\r\n", conv2_pool_min, conv2_pool_max);
 
+    	    /* Reorder HWC -> CHW before FC1
+    	       conv2_pool_out currently uses:
+    	       index = (h * 5 + w) * 32 + ch
 
-    	    /* Direct copy before FC1
-    	       conv2_pool_out layout already matches the FC1 expected input order
+    	       PyTorch flatten after [1, 32, 5, 5] expects:
+    	       index = ch * 25 + h * 5 + w
     	    */
-    	    for (int i = 0; i < 7 * 7 * 32; i++) {
-    	        flatten_out[i] = conv2_pool_out[i];
+    	    for (int ch = 0; ch < 32; ch++) {
+    	        for (int h = 0; h < 5; h++) {
+    	            for (int w = 0; w < 5; w++) {
+    	                int src_idx = (h * 5 + w) * 32 + ch;   // HWC layout
+    	                int dst_idx = ch * 25 + h * 5 + w;     // CHW layout
+    	                flatten_out[dst_idx] = conv2_pool_out[src_idx];
+    	            }
+    	        }
     	    }
 
     	    printf("Flatten output sample:\r\n");
@@ -490,7 +511,7 @@ int main(void)
     	        fc1_weights,
     	        fc1_bias,
     	        fc1_out,
-    	        7 * 7 * 32,
+    	        5 * 5 * 32,
     	        128,
     	        fc1_multiplier,
     	        fc1_shift,
