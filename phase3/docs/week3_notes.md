@@ -315,3 +315,15 @@ Key Learning:
 - Verified transition from convolutional features to final logits on-device
 - Established a strong base for PyTorch vs STM32 comparison next
 
+# Day 24 - PyTorch vs STM32 Validation
+## 🎯 Goal
+Find where the STM32 pipeline starts diverging from the trained Python model.
+
+By the end of today, you should have:
+
+- Python logits for the exact same image
+- Python predicted class
+- intermediate Python outputs for key stages
+- side-by-side comparison against STM32 outputs
+- identification of the first mismatch stage
+

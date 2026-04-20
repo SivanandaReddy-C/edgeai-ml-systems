@@ -88,20 +88,42 @@ def quantize_linear_layer(weights, bias, input_scale, output_scale, layer_name):
     bias:    numpy array of shape [out_features]
     """
 
-    weight_scale = np.max(np.abs(weights)) / 127.0
-    if weight_scale == 0:
-        weight_scale = 1e-8
+    out_features, in_features = weights.shape
 
-    weights_q = np.round(weights / weight_scale).astype(np.int8)
+    weights_q_list = []
+    bias_q_list = []
+    multipliers = []
+    shifts = []
+    weight_scales = []
 
-    bias_scale = input_scale * weight_scale
-    bias_q = np.round(bias / bias_scale).astype(np.int32)
+    for o in range(out_features):
+        w_o = weights[o]   # shape: [in_features]
 
-    effective_scale = bias_scale / output_scale
-    multiplier, shift = get_multiplier_shift(effective_scale)
+        # Per-output-channel weight scale
+        w_scale_o = np.max(np.abs(w_o)) / 127.0
+        if w_scale_o == 0:
+            w_scale_o = 1e-8
 
+        weight_scales.append(w_scale_o)
+
+        # Quantize this output neuron weights
+        w_q_o = np.round(w_o / w_scale_o).astype(np.int8)
+        weights_q_list.append(w_q_o)
+
+        # Quantize bias for this output neuron
+        bias_scale_o = input_scale * w_scale_o
+        b_q_o = int(np.round(bias[o] / bias_scale_o))
+        bias_q_list.append(b_q_o)
+
+        # Per-output-channel requantization params
+        effective_scale_o = bias_scale_o / output_scale
+        m_o, s_o = get_multiplier_shift(effective_scale_o)
+        multipliers.append(m_o)
+        shifts.append(s_o)
+
+    weights_q = np.stack(weights_q_list, axis=0)   # [out_features, in_features]
     weights_flat = weights_q.flatten()
-    bias_flat = bias_q.flatten()
+    bias_flat = np.array(bias_q_list, dtype=np.int32)
 
     print(f"/* ===== {layer_name.upper()} ===== */")
 
@@ -113,20 +135,18 @@ def quantize_linear_layer(weights, bias, input_scale, output_scale, layer_name):
     print(",".join(map(str, bias_flat)))
     print("};\n")
 
-    print(f"int32_t {layer_name}_multiplier[{len(bias_flat)}] = {{")
-    print(",".join([str(multiplier)] * len(bias_flat)))
+    print(f"int32_t {layer_name}_multiplier[{len(multipliers)}] = {{")
+    print(",".join(map(str, multipliers)))
     print("};\n")
 
-    print(f"int32_t {layer_name}_shift[{len(bias_flat)}] = {{")
-    print(",".join([str(shift)] * len(bias_flat)))
+    print(f"int32_t {layer_name}_shift[{len(shifts)}] = {{")
+    print(",".join(map(str, shifts)))
     print("};\n")
 
     print(f"/* {layer_name} input_scale  = {input_scale} */")
-    print(f"/* {layer_name} weight_scale = {weight_scale} */")
     print(f"/* {layer_name} output_scale = {output_scale} */")
-    print(f"/* {layer_name} eff_scale    = {effective_scale} */")
-    print(f"/* {layer_name} multiplier   = {multiplier} */")
-    print(f"/* {layer_name} shift        = {shift} */")
+    print(f"/* {layer_name} weight_scale min = {np.min(weight_scales)} */")
+    print(f"/* {layer_name} weight_scale max = {np.max(weight_scales)} */")
     print()
 
 def main():
@@ -186,9 +206,7 @@ def main():
     # -----------------------------
     # Conv2 pool output is the input to FC1
     fc1_input_scale = conv2_output_scale
-
-    # Temporary output scale for FC1
-    fc1_output_scale = 8.0 / 127.0
+    fc1_output_scale = 0.10737494971808487
 
     fc1_w = model.fc1.weight.detach().cpu().numpy()
     fc1_b = model.fc1.bias.detach().cpu().numpy()
@@ -205,7 +223,7 @@ def main():
     # FC2 scales
     # -----------------------------
     fc2_input_scale = fc1_output_scale
-    fc2_output_scale = 8.0 / 127.0
+    fc2_output_scale = 0.14029029786117433
 
     fc2_w = model.fc2.weight.detach().cpu().numpy()
     fc2_b = model.fc2.bias.detach().cpu().numpy()
