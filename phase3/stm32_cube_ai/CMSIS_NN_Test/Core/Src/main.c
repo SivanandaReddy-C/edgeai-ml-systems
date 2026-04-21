@@ -38,7 +38,7 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-
+#define BENCHMARK_MODE 1
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -118,6 +118,9 @@ int main(void)
   MX_GPIO_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
+
+
+
   /* Paste generated Conv1 weights here */
     int8_t conv1_weights[144] = {
     		-28,58,-20,46,28,-28,48,-15,69,17,41,23,19,-4,-43,38,48,-1,-7,26,44,34,55,34,-61,-115,-21,57,-11,35,72,3,-90,80,-25,-43,52,73,-89,60,8,-43,-46,29,30,-96,11,88,-69,-29,56,-9,-15,74,59,68,-66,63,-58,-108,91,13,-108,10,-84,-59,73,-31,-68,94,93,50,29,-80,-75,-75,-27,75,0,59,93,-17,-110,-35,-23,-34,-21,87,114,27,-68,3,2,65,60,73,72,-15,-12,10,-46,-22,20,-36,24,3,-25,-6,-59,-95,-54,-32,18,-62,56,15,29,36,-11,20,-63,62,78,-82,-42,59,-6,60,65,58,37,-78,-55,-127,-47,77,-12,65,-11,-25,33,28,-13,-92
@@ -212,15 +215,12 @@ int main(void)
     		};
 
 
-    /* Simple dummy pattern for initial validation */
     int8_t input_data[28 * 28];
 
     for (int i = 0; i < 28 * 28; i++) {
         input_data[i] = (int8_t)((input_u8[i] * 127) / 255);
     }
 
-
-    /* Output: 1 x 28 x 28 x 16 */
     int8_t output_data[28 * 28 * 16] = {0};
     int8_t relu_out[28 * 28 * 16] = {0};
     int8_t pool_out[14 * 14 * 16] = {0};
@@ -232,16 +232,12 @@ int main(void)
     int8_t fc1_relu_out[128] = {0};
     int8_t fc2_out[10] = {0};
 
-    /* Per-channel quant params (temporary near-identity for sanity test) */
-
-    /* Scratch buffer */
     int16_t bufferA[2000];
 
     cmsis_nn_context ctx;
     ctx.buf = bufferA;
     ctx.size = sizeof(bufferA);
 
-    /* Tensor dimensions */
     cmsis_nn_dims input_dims   = {1, 28, 28, 1};
     cmsis_nn_dims filter_dims  = {16, 3, 3, 1};
     cmsis_nn_dims bias_dims    = {16, 1, 1, 1};
@@ -252,9 +248,8 @@ int main(void)
     cmsis_nn_dims conv2_bias_dims   = {32, 1, 1, 1};
     cmsis_nn_dims conv2_output_dims = {1, 14, 14, 32};
 
-    /* Convolution parameters */
     cmsis_nn_conv_params conv_params;
-    conv_params.padding.h = 1; /* Use padding=1 to match the PyTorch training architecture */
+    conv_params.padding.h = 1;
     conv_params.padding.w = 1;
     conv_params.stride.h = 1;
     conv_params.stride.w = 1;
@@ -268,7 +263,6 @@ int main(void)
     cmsis_nn_per_channel_quant_params conv1_quant_params;
     conv1_quant_params.multiplier = conv1_multiplier;
     conv1_quant_params.shift = conv1_shift;
-
 
     cmsis_nn_conv_params conv2_params;
     conv2_params.padding.h = 1;
@@ -286,301 +280,347 @@ int main(void)
     conv2_quant_params.multiplier = conv2_multiplier;
     conv2_quant_params.shift = conv2_shift;
 
+    /* ===== Clean benchmark timing start ===== */
+    uint64_t total_cycles = 0;
+    float total_time_ms = 0.0f;
+    int final_pred_idx = -1;
+    int benchmark_ok = 1;
 
-    arm_cmsis_nn_status status = arm_convolve_s8(
-        &ctx,
-        &conv_params,
-        &conv1_quant_params,
-        &input_dims,
-        input_data,
-        &filter_dims,
-        conv1_weights,
-        &bias_dims,
-        conv1_bias,
-        &upscale_dims,
-        &output_dims,
-        output_data
-    );
+    const int warmup_runs = 2;
+    const int measured_runs = 10;
 
-    printf("Conv1 status: %d\r\n", status);
+    CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+    DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
 
-    if (status != ARM_CMSIS_NN_SUCCESS) {
-        printf("Conv1 failed!\r\n");
-    } else {
-    	printf("Conv1 output sample:\r\n");
-    	for (int i = 0; i < 40; i++) {
-    	    printf("%d ", output_data[i]);
-    	}
-    	printf("\r\n");
+    for (int run = 0; run < warmup_runs + measured_runs; run++)
+    {
+        memset(output_data, 0, sizeof(output_data));
+        memset(relu_out, 0, sizeof(relu_out));
+        memset(pool_out, 0, sizeof(pool_out));
+        memset(conv2_out, 0, sizeof(conv2_out));
+        memset(conv2_relu_out, 0, sizeof(conv2_relu_out));
+        memset(conv2_pool_out, 0, sizeof(conv2_pool_out));
+        memset(flatten_out, 0, sizeof(flatten_out));
+        memset(fc1_out, 0, sizeof(fc1_out));
+        memset(fc1_relu_out, 0, sizeof(fc1_relu_out));
+        memset(fc2_out, 0, sizeof(fc2_out));
 
-    	int sat_pos = 0, sat_neg = 0;
-    	for (int i = 0; i < 28 * 28 * 16; i++) {
-    	    if (output_data[i] == 127) sat_pos++;
-    	    if (output_data[i] == -128) sat_neg++;
-    	}
-    	printf("Saturation count: +127=%d, -128=%d\r\n", sat_pos, sat_neg);
+        DWT->CYCCNT = 0;
+        uint32_t c_start = DWT->CYCCNT;
 
-    	for (int i = 0; i < 28 * 28 * 16; i++) {
-    	    relu_out[i] = (output_data[i] < 0) ? 0 : output_data[i];
-    	}
+        arm_cmsis_nn_status status = arm_convolve_s8(
+            &ctx,
+            &conv_params,
+            &conv1_quant_params,
+            &input_dims,
+            input_data,
+            &filter_dims,
+            conv1_weights,
+            &bias_dims,
+            conv1_bias,
+            &upscale_dims,
+            &output_dims,
+            output_data
+        );
 
-    	printf("ReLU output sample:\r\n");
-    	for (int i = 0; i < 40; i++) {
-    	    printf("%d ", relu_out[i]);
-    	}
-    	printf("\r\n");
+        if (status != ARM_CMSIS_NN_SUCCESS) {
+            printf("Conv1 failed!\r\n");
+            benchmark_ok = 0;
+            break;
+        }
 
-    	for (int ch = 0; ch < 16; ch++) {
-    	    for (int oh = 0; oh < 14; oh++) {
-    	        for (int ow = 0; ow < 14; ow++) {
-    	            int ih = oh * 2;
-    	            int iw = ow * 2;
+        for (int i = 0; i < 28 * 28 * 16; i++) {
+            relu_out[i] = (output_data[i] < 0) ? 0 : output_data[i];
+        }
 
-    	            int idx0 = (ih * 28 + iw) * 16 + ch;
-    	            int idx1 = (ih * 28 + (iw + 1)) * 16 + ch;
-    	            int idx2 = ((ih + 1) * 28 + iw) * 16 + ch;
-    	            int idx3 = ((ih + 1) * 28 + (iw + 1)) * 16 + ch;
+        for (int ch = 0; ch < 16; ch++) {
+            for (int oh = 0; oh < 14; oh++) {
+                for (int ow = 0; ow < 14; ow++) {
+                    int ih = oh * 2;
+                    int iw = ow * 2;
 
-    	            int8_t max_val = relu_out[idx0];
-    	            if (relu_out[idx1] > max_val) max_val = relu_out[idx1];
-    	            if (relu_out[idx2] > max_val) max_val = relu_out[idx2];
-    	            if (relu_out[idx3] > max_val) max_val = relu_out[idx3];
+                    int idx0 = (ih * 28 + iw) * 16 + ch;
+                    int idx1 = (ih * 28 + (iw + 1)) * 16 + ch;
+                    int idx2 = ((ih + 1) * 28 + iw) * 16 + ch;
+                    int idx3 = ((ih + 1) * 28 + (iw + 1)) * 16 + ch;
 
-    	            int out_idx = (oh * 14 + ow) * 16 + ch;
-    	            pool_out[out_idx] = max_val;
-    	        }
-    	    }
-    	}
+                    int8_t max_val = relu_out[idx0];
+                    if (relu_out[idx1] > max_val) max_val = relu_out[idx1];
+                    if (relu_out[idx2] > max_val) max_val = relu_out[idx2];
+                    if (relu_out[idx3] > max_val) max_val = relu_out[idx3];
 
-    	printf("MaxPool output sample:\r\n");
-    	for (int i = 0; i < 40; i++) {
-    	    printf("%d ", pool_out[i]);
-    	}
-    	printf("\r\n");
+                    int out_idx = (oh * 14 + ow) * 16 + ch;
+                    pool_out[out_idx] = max_val;
+                }
+            }
+        }
 
-    	int conv1_max = -1000, conv1_min = 1000;
-    	for (int i = 0; i < 28 * 28 * 16; i++) {
-    	    if (output_data[i] > conv1_max) conv1_max = output_data[i];
-    	    if (output_data[i] < conv1_min) conv1_min = output_data[i];
-    	}
-    	printf("Conv1 Min: %d, Max: %d\r\n", conv1_min, conv1_max);
+        arm_cmsis_nn_status conv2_status = arm_convolve_s8(
+            &ctx,
+            &conv2_params,
+            &conv2_quant_params,
+            &conv2_input_dims,
+            pool_out,
+            &conv2_filter_dims,
+            conv2_weights,
+            &conv2_bias_dims,
+            conv2_bias,
+            &upscale_dims,
+            &conv2_output_dims,
+            conv2_out
+        );
 
-    	int relu_max = -1000, relu_min = 1000;
-    	for (int i = 0; i < 28 * 28 * 16; i++) {
-    	    if (relu_out[i] > relu_max) relu_max = relu_out[i];
-    	    if (relu_out[i] < relu_min) relu_min = relu_out[i];
-    	}
-    	printf("ReLU Min: %d, Max: %d\r\n", relu_min, relu_max);
+        if (conv2_status != ARM_CMSIS_NN_SUCCESS) {
+            printf("Conv2 failed!\r\n");
+            benchmark_ok = 0;
+            break;
+        }
 
-    	int pool_max = -1000, pool_min = 1000;
-    	for (int i = 0; i < 14 * 14 * 16; i++) {
-    	    if (pool_out[i] > pool_max) pool_max = pool_out[i];
-    	    if (pool_out[i] < pool_min) pool_min = pool_out[i];
-    	}
-    	printf("MaxPool Min: %d, Max: %d\r\n", pool_min, pool_max);
+        for (int i = 0; i < 14 * 14 * 32; i++) {
+            conv2_relu_out[i] = (conv2_out[i] < 0) ? 0 : conv2_out[i];
+        }
 
-    	arm_cmsis_nn_status conv2_status = arm_convolve_s8(
-    	    &ctx,
-    	    &conv2_params,
-    	    &conv2_quant_params,
-    	    &conv2_input_dims,
-    	    pool_out,
-    	    &conv2_filter_dims,
-    	    conv2_weights,
-    	    &conv2_bias_dims,
-    	    conv2_bias,
-    	    &upscale_dims,
-    	    &conv2_output_dims,
-    	    conv2_out
-    	);
+        for (int ch = 0; ch < 32; ch++) {
+            for (int oh = 0; oh < 7; oh++) {
+                for (int ow = 0; ow < 7; ow++) {
+                    int ih = oh * 2;
+                    int iw = ow * 2;
 
-    	printf("Conv2 status: %d\r\n", conv2_status);
+                    int idx0 = (ih * 14 + iw) * 32 + ch;
+                    int idx1 = (ih * 14 + (iw + 1)) * 32 + ch;
+                    int idx2 = ((ih + 1) * 14 + iw) * 32 + ch;
+                    int idx3 = ((ih + 1) * 14 + (iw + 1)) * 32 + ch;
 
-    	if (conv2_status != ARM_CMSIS_NN_SUCCESS) {
-    	    printf("Conv2 failed!\r\n");
-    	} else {
-    	    printf("Conv2 output sample:\r\n");
-    	    for (int i = 0; i < 40; i++) {
-    	        printf("%d ", conv2_out[i]);
-    	    }
-    	    printf("\r\n");
+                    int8_t max_val = conv2_relu_out[idx0];
+                    if (conv2_relu_out[idx1] > max_val) max_val = conv2_relu_out[idx1];
+                    if (conv2_relu_out[idx2] > max_val) max_val = conv2_relu_out[idx2];
+                    if (conv2_relu_out[idx3] > max_val) max_val = conv2_relu_out[idx3];
 
-    	    for (int i = 0; i < 14 * 14 * 32; i++) {
-    	        conv2_relu_out[i] = (conv2_out[i] < 0) ? 0 : conv2_out[i];
-    	    }
+                    int out_idx = (oh * 7 + ow) * 32 + ch;
+                    conv2_pool_out[out_idx] = max_val;
+                }
+            }
+        }
 
-    	    printf("Conv2 ReLU output sample:\r\n");
-    	    for (int i = 0; i < 40; i++) {
-    	        printf("%d ", conv2_relu_out[i]);
-    	    }
-    	    printf("\r\n");
+        for (int i = 0; i < 7 * 7 * 32; i++) {
+            flatten_out[i] = conv2_pool_out[i];
+        }
 
-    	    for (int ch = 0; ch < 32; ch++) {
-    	        for (int oh = 0; oh < 7; oh++) {
-    	            for (int ow = 0; ow < 7; ow++) {
-    	                int ih = oh * 2;
-    	                int iw = ow * 2;
+        linear_s8(
+            flatten_out,
+            fc1_weights,
+            fc1_bias,
+            fc1_out,
+            7 * 7 * 32,
+            128,
+            fc1_multiplier,
+            fc1_shift,
+            -128,
+            127
+        );
 
-    	                int idx0 = (ih * 14 + iw) * 32 + ch;
-    	                int idx1 = (ih * 14 + (iw + 1)) * 32 + ch;
-    	                int idx2 = ((ih + 1) * 14 + iw) * 32 + ch;
-    	                int idx3 = ((ih + 1) * 14 + (iw + 1)) * 32 + ch;
+        for (int i = 0; i < 128; i++) {
+            fc1_relu_out[i] = (fc1_out[i] < 0) ? 0 : fc1_out[i];
+        }
 
-    	                int8_t max_val = conv2_relu_out[idx0];
-    	                if (conv2_relu_out[idx1] > max_val) max_val = conv2_relu_out[idx1];
-    	                if (conv2_relu_out[idx2] > max_val) max_val = conv2_relu_out[idx2];
-    	                if (conv2_relu_out[idx3] > max_val) max_val = conv2_relu_out[idx3];
+        linear_s8(
+            fc1_relu_out,
+            fc2_weights,
+            fc2_bias,
+            fc2_out,
+            128,
+            10,
+            fc2_multiplier,
+            fc2_shift,
+            -128,
+            127
+        );
 
-    	                int out_idx = (oh * 7 + ow) * 32 + ch;
-    	                conv2_pool_out[out_idx] = max_val;
-    	            }
-    	        }
-    	    }
+        int pred_idx = 0;
+        int8_t pred_val = fc2_out[0];
 
-    	    printf("Conv2 MaxPool output sample:\r\n");
-    	    for (int i = 0; i < 40; i++) {
-    	        printf("%d ", conv2_pool_out[i]);
-    	    }
-    	    printf("\r\n");
+        for (int i = 1; i < 10; i++) {
+            if (fc2_out[i] > pred_val) {
+                pred_val = fc2_out[i];
+                pred_idx = i;
+            }
+        }
 
-    	    int conv2_sat_pos = 0, conv2_sat_neg = 0;
-    	    for (int i = 0; i < 14 * 14 * 32; i++) {
-    	        if (conv2_out[i] == 127) conv2_sat_pos++;
-    	        if (conv2_out[i] == -128) conv2_sat_neg++;
-    	    }
-    	    printf("Conv2 Saturation count: +127=%d, -128=%d\r\n", conv2_sat_pos, conv2_sat_neg);
+        uint32_t c_end = DWT->CYCCNT;
+        uint32_t cycles = c_end - c_start;
+        float time_ms = (float)cycles * 1000.0f / (float)SystemCoreClock;
 
-    	    int conv2_max = -1000, conv2_min = 1000;
-    	    for (int i = 0; i < 14 * 14 * 32; i++) {
-    	        if (conv2_out[i] > conv2_max) conv2_max = conv2_out[i];
-    	        if (conv2_out[i] < conv2_min) conv2_min = conv2_out[i];
-    	    }
-    	    printf("Conv2 Min: %d, Max: %d\r\n", conv2_min, conv2_max);
+        if (run >= warmup_runs) {
+            total_cycles += cycles;
+            total_time_ms += time_ms;
+            final_pred_idx = pred_idx;
+        }
 
-    	    int conv2_relu_max = -1000, conv2_relu_min = 1000;
-    	    for (int i = 0; i < 14 * 14 * 32; i++) {
-    	        if (conv2_relu_out[i] > conv2_relu_max) conv2_relu_max = conv2_relu_out[i];
-    	        if (conv2_relu_out[i] < conv2_relu_min) conv2_relu_min = conv2_relu_out[i];
-    	    }
-    	    printf("Conv2 ReLU Min: %d, Max: %d\r\n", conv2_relu_min, conv2_relu_max);
+#if !BENCHMARK_MODE
+        printf("Conv1 status: %d\r\n", status);
+        printf("Conv1 output sample:\r\n");
+        for (int i = 0; i < 40; i++) {
+            printf("%d ", output_data[i]);
+        }
+        printf("\r\n");
 
-    	    int conv2_pool_max = -1000, conv2_pool_min = 1000;
-    	    for (int i = 0; i < 7 * 7 * 32; i++) {
-    	        if (conv2_pool_out[i] > conv2_pool_max) conv2_pool_max = conv2_pool_out[i];
-    	        if (conv2_pool_out[i] < conv2_pool_min) conv2_pool_min = conv2_pool_out[i];
-    	    }
-    	    printf("Conv2 MaxPool Min: %d, Max: %d\r\n", conv2_pool_min, conv2_pool_max);
+        int sat_pos = 0, sat_neg = 0;
+        for (int i = 0; i < 28 * 28 * 16; i++) {
+            if (output_data[i] == 127) sat_pos++;
+            if (output_data[i] == -128) sat_neg++;
+        }
+        printf("Saturation count: +127=%d, -128=%d\r\n", sat_pos, sat_neg);
 
+        printf("ReLU output sample:\r\n");
+        for (int i = 0; i < 40; i++) {
+            printf("%d ", relu_out[i]);
+        }
+        printf("\r\n");
 
-    	    /* Direct copy before FC1
-    	       conv2_pool_out layout already matches the FC1 expected input order
-    	    */
-    	    for (int i = 0; i < 7 * 7 * 32; i++) {
-    	        flatten_out[i] = conv2_pool_out[i];
-    	    }
+        printf("MaxPool output sample:\r\n");
+        for (int i = 0; i < 40; i++) {
+            printf("%d ", pool_out[i]);
+        }
+        printf("\r\n");
 
-    	    printf("Flatten output sample:\r\n");
-    	    for (int i = 0; i < 40; i++) {
-    	        printf("%d ", flatten_out[i]);
-    	    }
-    	    printf("\r\n");
+        int conv1_max = -1000, conv1_min = 1000;
+        for (int i = 0; i < 28 * 28 * 16; i++) {
+            if (output_data[i] > conv1_max) conv1_max = output_data[i];
+            if (output_data[i] < conv1_min) conv1_min = output_data[i];
+        }
+        printf("Conv1 Min: %d, Max: %d\r\n", conv1_min, conv1_max);
 
-    	    /* FC1 expects 7 x 7 x 32 = 1568 inputs, matching the trained model */
-    	    linear_s8(
-    	        flatten_out,
-    	        fc1_weights,
-    	        fc1_bias,
-    	        fc1_out,
-    	        7 * 7 * 32,
-    	        128,
-    	        fc1_multiplier,
-    	        fc1_shift,
-    	        -128,
-    	        127
-    	    );
+        int relu_max = -1000, relu_min = 1000;
+        for (int i = 0; i < 28 * 28 * 16; i++) {
+            if (relu_out[i] > relu_max) relu_max = relu_out[i];
+            if (relu_out[i] < relu_min) relu_min = relu_out[i];
+        }
+        printf("ReLU Min: %d, Max: %d\r\n", relu_min, relu_max);
 
-    	    printf("FC1 output sample:\r\n");
-    	    for (int i = 0; i < 40; i++) {
-    	        printf("%d ", fc1_out[i]);
-    	    }
-    	    printf("\r\n");
+        int pool_max = -1000, pool_min = 1000;
+        for (int i = 0; i < 14 * 14 * 16; i++) {
+            if (pool_out[i] > pool_max) pool_max = pool_out[i];
+            if (pool_out[i] < pool_min) pool_min = pool_out[i];
+        }
+        printf("MaxPool Min: %d, Max: %d\r\n", pool_min, pool_max);
 
-    	    for (int i = 0; i < 128; i++) {
-    	        fc1_relu_out[i] = (fc1_out[i] < 0) ? 0 : fc1_out[i];
-    	    }
+        printf("Conv2 status: %d\r\n", conv2_status);
+        printf("Conv2 output sample:\r\n");
+        for (int i = 0; i < 40; i++) {
+            printf("%d ", conv2_out[i]);
+        }
+        printf("\r\n");
 
-    	    printf("FC1 ReLU output sample:\r\n");
-    	    for (int i = 0; i < 40; i++) {
-    	        printf("%d ", fc1_relu_out[i]);
-    	    }
-    	    printf("\r\n");
+        printf("Conv2 ReLU output sample:\r\n");
+        for (int i = 0; i < 40; i++) {
+            printf("%d ", conv2_relu_out[i]);
+        }
+        printf("\r\n");
 
-    	    linear_s8(
-    	        fc1_relu_out,
-    	        fc2_weights,
-    	        fc2_bias,
-    	        fc2_out,
-    	        128,
-    	        10,
-    	        fc2_multiplier,
-    	        fc2_shift,
-    	        -128,
-    	        127
-    	    );
+        printf("Conv2 MaxPool output sample:\r\n");
+        for (int i = 0; i < 40; i++) {
+            printf("%d ", conv2_pool_out[i]);
+        }
+        printf("\r\n");
 
-    	    printf("FC2 output (logits):\r\n");
-    	    for (int i = 0; i < 10; i++) {
-    	        printf("%d ", fc2_out[i]);
-    	    }
-    	    printf("\r\n");
+        int conv2_sat_pos = 0, conv2_sat_neg = 0;
+        for (int i = 0; i < 14 * 14 * 32; i++) {
+            if (conv2_out[i] == 127) conv2_sat_pos++;
+            if (conv2_out[i] == -128) conv2_sat_neg++;
+        }
+        printf("Conv2 Saturation count: +127=%d, -128=%d\r\n", conv2_sat_pos, conv2_sat_neg);
 
-    	    int pred_idx = 0;
-    	    int8_t pred_val = fc2_out[0];
+        int conv2_max = -1000, conv2_min = 1000;
+        for (int i = 0; i < 14 * 14 * 32; i++) {
+            if (conv2_out[i] > conv2_max) conv2_max = conv2_out[i];
+            if (conv2_out[i] < conv2_min) conv2_min = conv2_out[i];
+        }
+        printf("Conv2 Min: %d, Max: %d\r\n", conv2_min, conv2_max);
 
-    	    for (int i = 1; i < 10; i++) {
-    	        if (fc2_out[i] > pred_val) {
-    	            pred_val = fc2_out[i];
-    	            pred_idx = i;
-    	        }
-    	    }
+        int conv2_relu_max = -1000, conv2_relu_min = 1000;
+        for (int i = 0; i < 14 * 14 * 32; i++) {
+            if (conv2_relu_out[i] > conv2_relu_max) conv2_relu_max = conv2_relu_out[i];
+            if (conv2_relu_out[i] < conv2_relu_min) conv2_relu_min = conv2_relu_out[i];
+        }
+        printf("Conv2 ReLU Min: %d, Max: %d\r\n", conv2_relu_min, conv2_relu_max);
 
-    	    printf("Predicted class: %d\r\n", pred_idx);
+        int conv2_pool_max = -1000, conv2_pool_min = 1000;
+        for (int i = 0; i < 7 * 7 * 32; i++) {
+            if (conv2_pool_out[i] > conv2_pool_max) conv2_pool_max = conv2_pool_out[i];
+            if (conv2_pool_out[i] < conv2_pool_min) conv2_pool_min = conv2_pool_out[i];
+        }
+        printf("Conv2 MaxPool Min: %d, Max: %d\r\n", conv2_pool_min, conv2_pool_max);
 
-    	    int fc1_max = -1000, fc1_min = 1000;
-    	    for (int i = 0; i < 128; i++) {
-    	        if (fc1_out[i] > fc1_max) fc1_max = fc1_out[i];
-    	        if (fc1_out[i] < fc1_min) fc1_min = fc1_out[i];
-    	    }
-    	    printf("FC1 Min: %d, Max: %d\r\n", fc1_min, fc1_max);
+        printf("Flatten output sample:\r\n");
+        for (int i = 0; i < 40; i++) {
+            printf("%d ", flatten_out[i]);
+        }
+        printf("\r\n");
 
-    	    int fc1_relu_max = -1000, fc1_relu_min = 1000;
-    	    for (int i = 0; i < 128; i++) {
-    	        if (fc1_relu_out[i] > fc1_relu_max) fc1_relu_max = fc1_relu_out[i];
-    	        if (fc1_relu_out[i] < fc1_relu_min) fc1_relu_min = fc1_relu_out[i];
-    	    }
-    	    printf("FC1 ReLU Min: %d, Max: %d\r\n", fc1_relu_min, fc1_relu_max);
+        printf("FC1 output sample:\r\n");
+        for (int i = 0; i < 40; i++) {
+            printf("%d ", fc1_out[i]);
+        }
+        printf("\r\n");
 
-    	    int fc2_max = -1000, fc2_min = 1000;
-    	    for (int i = 0; i < 10; i++) {
-    	        if (fc2_out[i] > fc2_max) fc2_max = fc2_out[i];
-    	        if (fc2_out[i] < fc2_min) fc2_min = fc2_out[i];
-    	    }
-    	    printf("FC2 Min: %d, Max: %d\r\n", fc2_min, fc2_max);
-    	}
+        printf("FC1 ReLU output sample:\r\n");
+        for (int i = 0; i < 40; i++) {
+            printf("%d ", fc1_relu_out[i]);
+        }
+        printf("\r\n");
+
+        printf("FC2 output (logits):\r\n");
+        for (int i = 0; i < 10; i++) {
+            printf("%d ", fc2_out[i]);
+        }
+        printf("\r\n");
+
+        int fc1_max = -1000, fc1_min = 1000;
+        for (int i = 0; i < 128; i++) {
+            if (fc1_out[i] > fc1_max) fc1_max = fc1_out[i];
+            if (fc1_out[i] < fc1_min) fc1_min = fc1_out[i];
+        }
+        printf("FC1 Min: %d, Max: %d\r\n", fc1_min, fc1_max);
+
+        int fc1_relu_max = -1000, fc1_relu_min = 1000;
+        for (int i = 0; i < 128; i++) {
+            if (fc1_relu_out[i] > fc1_relu_max) fc1_relu_max = fc1_relu_out[i];
+            if (fc1_relu_out[i] < fc1_relu_min) fc1_relu_min = fc1_relu_out[i];
+        }
+        printf("FC1 ReLU Min: %d, Max: %d\r\n", fc1_relu_min, fc1_relu_max);
+
+        int fc2_max = -1000, fc2_min = 1000;
+        for (int i = 0; i < 10; i++) {
+            if (fc2_out[i] > fc2_max) fc2_max = fc2_out[i];
+            if (fc2_out[i] < fc2_min) fc2_min = fc2_out[i];
+        }
+        printf("FC2 Min: %d, Max: %d\r\n", fc2_min, fc2_max);
+	  	 #endif
     }
-  /* USER CODE END 2 */
 
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
-  while (1)
-  {
-    /* USER CODE END WHILE */
+    if (benchmark_ok) {
+        float avg_cycles = (float)total_cycles / measured_runs;
+        float avg_time_ms = total_time_ms / measured_runs;
 
-    /* USER CODE BEGIN 3 */
+        printf("Predicted class: %d\r\n", final_pred_idx);
+        printf("CMSIS Average Inference Cycles (%d runs): %.0f\r\n", measured_runs, avg_cycles);
+        printf("CMSIS Average Inference Time (%d runs): %.3f ms\r\n", measured_runs, avg_time_ms);
+    }
+
+
+
+      /* USER CODE END 2 */
+
+    /* Infinite loop */
+    /* USER CODE BEGIN WHILE */
+    while (1)
+    {
+      /* USER CODE END WHILE */
+
+      /* USER CODE BEGIN 3 */
+    }
+    /* USER CODE END 3 */
   }
-  /* USER CODE END 3 */
-}
-
 /**
   * @brief System Clock Configuration
   * @retval None
