@@ -254,7 +254,7 @@ int main(void)
 
     /* Convolution parameters */
     cmsis_nn_conv_params conv_params;
-    conv_params.padding.h = 1;
+    conv_params.padding.h = 1; /* Use padding=1 to match the PyTorch training architecture */
     conv_params.padding.w = 1;
     conv_params.stride.h = 1;
     conv_params.stride.w = 1;
@@ -485,6 +485,7 @@ int main(void)
     	    }
     	    printf("\r\n");
 
+    	    /* FC1 expects 7 x 7 x 32 = 1568 inputs, matching the trained model */
     	    linear_s8(
     	        flatten_out,
     	        fc1_weights,

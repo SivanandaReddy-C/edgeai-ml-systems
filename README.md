@@ -15,8 +15,10 @@
 This project implements an **end-to-end ML systems pipeline**, covering:
 
 - **Phase 1:** Model Development & Benchmarking  
-- **Phase 2:** Deployment & Inference Optimization 
-- **Phase 3:** Embedded Deployment on STM32   
+- **Phase 2:** Deployment & Optimization (ONNX Runtime)  
+- **Phase 3:** Embedded Deployment on STM32  
+  - Cube.AI (high-level)
+  - CMSIS-NN (low-level manual pipeline)  
 
 Focus areas:
 
@@ -31,30 +33,27 @@ Focus areas:
 
 ## ❓ Why This Project Matters
 
-Modern ML systems are not just about training models — but deploying them efficiently.
+Most ML work stops at training.
 
-This project focuses on:
+This project answers:
 
-- Bridging research → production gap  
-- Understanding runtime constraints  
-- Building deployment-ready ML pipelines  
-- Evaluating real-world system performance  
+- How does a model behave **after deployment?**
+- What breaks when moving to **edge devices?**
+- What really limits performance — **compute, memory, or tooling?**
 
 ---
 
 ## 💡 Highlights
 
-- Built CNN and Transformer models from scratch  
-- Exported models from **PyTorch → ONNX** for deployment  
-- Achieved **~5–10× inference speedup** using ONNX Runtime  
-- Implemented **INT8 quantization** and analyzed real-world limitations  
-- Identified backend constraints (e.g., **ConvInteger unsupported on CPU**)  
-- Performed **system-level benchmarking**: latency, throughput, threads, memory  
-- Measured **end-to-end latency and cold start performance**  
-- Redesigned CNN architecture for embedded deployment (GAP-based optimization)  
-- Achieved ~24× reduction in model Flash memory on STM32  
-- Successfully executed ML inference on microcontroller (STM32 Cortex-M4)  
-- Built end-to-end pipeline from training → deployment → embedded execution  
+- Built CNN and Transformer from scratch  
+- Achieved **~5–10× speedup** using ONNX Runtime  
+- Implemented INT8 quantization and analyzed limitations  
+- Identified runtime constraints (`ConvInteger` unsupported)  
+- Performed full system benchmarking (latency, throughput, memory)  
+- Deployed models on **STM32 Cortex-M4**  
+- Reduced Flash usage by **~24× via architecture redesign**  
+- Built **manual CMSIS-NN inference pipeline from scratch**  
+- Debugged real deployment issues (quantization, layout, architecture mismatch)
 
 ---
 
@@ -62,10 +61,9 @@ This project focuses on:
 
 ## 🎯 Objectives
 
-- Implement CNN training pipeline
-- Build Transformer Encoder from scratch
-- Profile training performance
-- Benchmark CNN vs Transformer
+- CNN training pipeline
+- Transformer encoder from scratch
+- Profiling & benchmarking
 
 ---
 
@@ -383,8 +381,7 @@ Applied INT8 quantization to optimize model size.
 # 🔹 Phase 3 — Embedded Deployment on STM32
 
 ## 🎯 Objective
-
-Deploy optimized ML models on **resource-constrained embedded hardware (STM32 Cortex-M4)** using X-CUBE-AI and execute inference on-device.
+Deploy optimized ML models on **resource-constrained embedded hardware (STM32 Cortex-M4)** and analyze real execution behavior beyond desktop environments.
 
 ---
 
@@ -620,14 +617,347 @@ Tested with:
 
 ---
 
-## 🚀 Future Direction
+# 🔥 Step 7 — CMSIS-NN Manual Inference Pipeline (Week 3)
 
-- CMSIS-NN (INT8 acceleration)  
-- Cube.AI internal quantization  
-- Lightweight architectures  
-- Reduced convolution complexity  
+## 🎯 Objective
+
+Move beyond Cube.AI and build a **manual CNN inference pipeline using CMSIS-NN (INT8)** to understand low-level execution on Cortex-M4.
+
+Target pipeline:
+
+Input → Conv1 → ReLU → MaxPool  
+→ Conv2 → ReLU → MaxPool  
+→ Flatten → FC1 → ReLU → FC2
 
 ---
+
+## ⚙️ Implementation Details
+
+- CMSIS-NN manually integrated into STM32 project
+- INT8 weights and activations used across all layers
+- INT32 accumulation used to avoid overflow
+- Explicit requantization using **multiplier + shift**
+- Custom fully connected layer (`linear_s8`) implemented
+- Stage-wise outputs printed via UART for validation
+- Real PyTorch-learned parameters exported into C arrays and executed on STM32
+
+---
+
+## 🧪 Week 3 Progress Summary
+
+| Day | Milestone | Result |
+|------|----------|--------|
+| Day 15 | CMSIS-NN integration into STM32 project | ✅ Successful |
+| Day 16 | Fixed-point inference study | ✅ Understood and validated |
+| Day 17 | Minimal CMSIS-NN convolution test | ✅ Correct output verified |
+| Day 18 | Real Conv1 weights on STM32 | ✅ Working |
+| Day 19 | Conv1 requantization fix | ✅ Stable, non-saturated output |
+| Day 20 | Conv1 → ReLU → MaxPool pipeline | ✅ Working |
+| Day 21 | Added Conv2 | ✅ Working |
+| Day 22 | Added Conv2 → ReLU → MaxPool | ✅ Working |
+| Day 23 | Added Flatten + FC1 + FC2 | ✅ Full pipeline executed |
+| Day 24 | PyTorch vs STM32 validation | ✅ Root cause identified |
+| Day 25 | Architecture + layout fix | ✅ STM32 prediction matched PyTorch |
+
+---
+
+## 📊 Stage-Wise Results
+
+### Day 17 — First Real CMSIS-NN Convolution
+
+Minimal convolution layer validated successfully on STM32.
+
+**Validation setup**
+- Input tensor: `4 × 4`
+- Kernel: `3 × 3`
+- Output tensor: `2 × 2`
+
+**Expected raw output**
+- `[-6, -6, -6, -6]`
+
+**Observed STM32 output**
+- `[-6, -6, -6, -6]`
+
+**Status**
+- `ARM_CMSIS_NN_SUCCESS (0)`
+
+📌 Result:  
+Verified that CMSIS-NN convolution was executing correctly independent of later multi-layer pipeline issues.
+
+---
+
+### Day 18 — Real Conv1 Layer on STM32
+
+Integrated real Conv1 weights exported from PyTorch.
+
+**Validation setup**
+- Input: MNIST-style `28 × 28` image
+- Kernel size: `3 × 3`
+- Output tensor: `26 × 26 × 16`
+
+**Results**
+- Conv1 status: `0`
+- Output sample: non-zero and varied
+- Saturation count: `+127 = 0`, `-128 = 0`
+
+📌 Result:  
+First real learned CNN layer successfully executed on STM32.
+
+---
+
+### Day 19 — Conv1 Requantization Fix
+
+Corrected multiplier/shift handling for Conv1.
+
+**Results**
+- Conv1 status: `0`
+- Conv1 output min/max: `-40 / 47`
+- Saturation: `+127 = 0`, `-128 = 0`
+
+📌 Result:  
+Conv1 output became numerically meaningful, stable, and suitable for chaining into later layers.
+
+---
+
+### Day 20 — Conv1 → ReLU → MaxPool
+
+Extended the single-layer test into a mini inference pipeline.
+
+**Results**
+- Conv1 output sample: structured signed values
+- ReLU output sample: negative values removed correctly
+- MaxPool output sample: strongest activations preserved
+- Conv1 min/max: `-40 / 47`
+- ReLU min/max: `0 / 47`
+- MaxPool min/max: `0 / 47`
+
+📌 Result:  
+Confirmed stable tensor propagation across Conv1, ReLU, and MaxPool.
+
+---
+
+### Day 21 — Added Conv2
+
+Integrated Conv2 using pooled Conv1 output as input.
+
+**Results**
+- Conv2 status: `0`
+- Conv2 output sample: structured signed values
+- Conv2 min/max: `-106 / 80`
+- Saturation: `+127 = 0`, `-128 = 0`
+
+📌 Result:  
+Two-layer quantized CNN pipeline became functional on STM32.
+
+---
+
+### Day 22 — Conv2 → ReLU → MaxPool
+
+Extended the pipeline deeper and validated downstream feature flow.
+
+**Results**
+- Conv2 output sample: structured signed values
+- Conv2 ReLU output: negatives removed correctly
+- Conv2 MaxPool output: strong activations preserved
+- Conv2 min/max: `-106 / 80`
+- Conv2 ReLU min/max: `0 / 80`
+- Conv2 MaxPool min/max: `0 / 80`
+
+📌 Result:  
+Confirmed stable multi-stage CNN feature extraction on STM32.
+
+---
+
+### Day 23 — Full CNN Inference Path
+
+Added Flatten, FC1, ReLU, and FC2 to build complete end-to-end inference.
+
+**Results**
+- Flatten output sample: valid pooled feature vector observed
+- FC1 output sample: structured signed values
+- FC1 ReLU output sample: negatives removed correctly
+- FC2 logits: `-12 -11 8 -25 9 -26 -25 -5 -9 -15`
+- Predicted class: `4`
+
+**Ranges**
+- FC1 min/max: `-62 / 70`
+- FC1 ReLU min/max: `0 / 70`
+- FC2 min/max: `-26 / 9`
+
+📌 Result:  
+End-to-end CNN inference executed successfully on STM32, but prediction still did not match PyTorch.
+
+---
+
+## ⚠️ Key Debugging Challenges
+
+### 1. Quantization Scaling Issues
+
+- Incorrect multiplier/shift caused valid outputs to collapse to zero
+- Required layer-wise tuning of output scales
+- Verified correctness using min/max and saturation checks
+
+📌 Insight:  
+Quantization correctness is critical — wrong scaling destroys meaningful inference.
+
+---
+
+### 2. Input Representation
+
+- Direct int8 handling of image input caused incorrect mapping
+- Fixed by:
+  - using uint8 input
+  - converting properly to int8 before inference
+
+📌 Insight:  
+Input representation directly affects downstream convolution correctness.
+
+---
+
+### 3. Architecture Mismatch (Critical Issue)
+
+During PyTorch vs STM32 comparison, the key mismatch was identified:
+
+- STM32 FC1 input size: `800`
+- Trained PyTorch model FC1 input size: `1568`
+
+**Root cause**
+- STM32 path used no-padding style output shape at that stage
+- Trained PyTorch model used `padding = 1`, so final feature map before FC1 was `32 × 7 × 7 = 1568`
+
+📌 Impact:  
+Even correct integer math could not match the trained model because the deployed architecture itself was different.
+
+---
+
+### 4. Flatten Layout Mismatch (Critical Issue)
+
+Initial assumption:
+- Flatten needed a manual HWC → CHW reorder before FC1
+
+Actual behavior:
+- The pooled CMSIS-NN output was already aligned with the FC layer expectation for the working pipeline
+- Manual reorder scrambled the data and broke FC behavior
+
+**Final fix**
+```c
+for (int i = 0; i < 7 * 7 * 32; i++) {
+    flatten_out[i] = conv2_pool_out[i];
+}
+
+---
+
+---
+
+# ⚖️ CMSIS-NN vs Cube.AI Comparison
+
+## 🎯 Objective
+
+Compare two deployment approaches on STM32:
+
+- Cube.AI (automated deployment)
+- CMSIS-NN (manual optimized pipeline)
+
+---
+
+## 📊 Comparison Summary
+
+| Aspect | Cube.AI | CMSIS-NN |
+|-------|--------|----------|
+| Integration Effort | Very low | High (manual implementation) |
+| Control over pipeline | Limited | Full control |
+| Development Time | Fast | Slow |
+| Debug visibility | Limited | Full (layer-wise inspection) |
+| Flexibility | Low | High |
+| Quantization control | Hidden (tool-driven) | Explicit (manual scaling) |
+
+---
+
+## ⚡ Performance Perspective
+
+| Metric | Cube.AI | CMSIS-NN |
+|------|--------|----------|
+| Inference Latency | ~107 ms (optimized CNN) | Comparable (manual pipeline) |
+| Flash Usage | ~34 KB (optimized CNN) | Similar (depends on implementation) |
+| RAM Usage | ~21 KB | Similar |
+| Optimization Level | Tool-driven | Developer-driven |
+
+📌 Insight:  
+CMSIS-NN does not automatically outperform Cube.AI unless **manually optimized further**
+
+---
+
+## 🧠 Engineering Trade-offs
+
+### Cube.AI
+
+**Pros**
+- Fast deployment
+- Minimal effort
+- Automatic memory management
+- Good for production pipelines
+
+**Cons**
+- Limited visibility into execution
+- Hard to debug internal issues
+- Less control over quantization behavior
+
+---
+
+### CMSIS-NN
+
+**Pros**
+- Full control over:
+  - data flow
+  - quantization
+  - memory layout
+- Deep understanding of inference internals
+- Easier to debug layer-wise issues
+
+**Cons**
+- High development effort
+- Manual debugging required
+- Easy to introduce subtle bugs (layout, scaling)
+
+---
+
+## 🔥 Real Debugging Insight (From This Project)
+
+Major issues **only discovered using CMSIS-NN**:
+
+- Architecture mismatch (800 vs 1568)
+- Flatten layout mismatch
+- Quantization scaling instability
+
+👉 These issues would be extremely difficult to diagnose using Cube.AI alone
+
+---
+
+## 🧠 Key Takeaway
+
+> Cube.AI is for **fast deployment**  
+> CMSIS-NN is for **deep control and understanding**
+
+---
+
+## 🎯 When to Use What
+
+| Scenario | Recommended Approach |
+|---------|---------------------|
+| Quick deployment | Cube.AI |
+| Production system | Cube.AI |
+| Debugging model behavior | CMSIS-NN |
+| Custom optimization | CMSIS-NN |
+| Research / learning | CMSIS-NN |
+
+---
+
+## 🚀 Final Insight
+
+> CMSIS-NN is not just an alternative to Cube.AI  
+> It is a **tool to understand what Cube.AI hides**
+
+--- 
 
 ## 🔥 Phase 3 Key Achievement
 > End-to-end pipeline validated:  
