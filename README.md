@@ -847,16 +847,17 @@ for (int i = 0; i < 7 * 7 * 32; i++) {
 
 ---
 
----
 
 # ⚖️ CMSIS-NN vs Cube.AI Comparison
 
 ## 🎯 Objective
 
-Compare two deployment approaches on STM32:
+Compare two deployment approaches on STM32 using the **same CNN architecture**:
 
-- Cube.AI (automated deployment)
-- CMSIS-NN (manual optimized pipeline)
+- CNN:  
+  Conv → Conv → Flatten → FC(1568 → 128 → 10)
+
+This ensures a **fair comparison** across identical model structure.
 
 ---
 
@@ -873,17 +874,66 @@ Compare two deployment approaches on STM32:
 
 ---
 
-## ⚡ Performance Perspective
+## ⚡ Performance Perspective (Same CNN)
 
-| Metric | Cube.AI | CMSIS-NN |
-|------|--------|----------|
-| Inference Latency | ~107 ms (optimized CNN) | Comparable (manual pipeline) |
-| Flash Usage | ~34 KB (optimized CNN) | Similar (depends on implementation) |
-| RAM Usage | ~21 KB | Similar |
-| Optimization Level | Tool-driven | Developer-driven |
+| Metric | Cube.AI (CNN) | CMSIS-NN (CNN) |
+|------|--------------|----------------|
+| Inference Latency | ~125.67 ms | ~865.46 ms |
+| Inference Cycles | Not exposed | ~103.8 Million cycles |
+| Flash Usage | ~822 KB | Similar (weights dominated) |
+| RAM Usage | ~21.5 KB | ~21.5 KB |
+| Optimization Level | Tool-driven | Manual (baseline implementation) |
 
-📌 Insight:  
-CMSIS-NN does not automatically outperform Cube.AI unless **manually optimized further**
+---
+
+## 📊 CMSIS-NN Measured Performance
+
+Benchmark setup:
+
+- 2 warmup runs + 10 measured runs  
+- Cycle-level measurement using DWT counter  
+- Full inference pipeline measured:
+  Conv → ReLU → Pool → Conv → ReLU → Pool → Flatten → FC1 → ReLU → FC2  
+
+### Results (STM32 Cortex-M4)
+
+- Average Cycles: ~103,855,240  
+- Average Latency: ~865.46 ms  
+
+---
+
+## ⚠️ Key Observation
+
+👉 CMSIS-NN implementation is **~6.8× slower than Cube.AI** for the same CNN model  
+
+---
+
+## 🧠 Why CMSIS-NN is Slower (In This Implementation)
+
+Although CMSIS-NN provides optimized kernels:
+
+- Only convolution layers use CMSIS optimized functions  
+- Pooling and ReLU are implemented manually  
+- Fully connected layers use custom `linear_s8` implementation  
+- No operator fusion (Conv + ReLU + Pool are separate)  
+- Memory access patterns are not optimized  
+
+👉 Result:
+
+The system behaves like a **correct reference pipeline**,  
+not a fully optimized CMSIS implementation.
+
+---
+
+## 🔥 Real Debugging Insight (From This Project)
+
+Using CMSIS-NN enabled identification of issues that are hard to detect in tool-driven pipelines:
+
+- FC1 dimensional mismatch (800 vs 1568)  
+- Flatten layout mismatch  
+- Quantization scaling inconsistencies  
+
+👉 These issues are difficult to diagnose using Cube.AI alone due to abstraction.
 
 ---
 
@@ -892,15 +942,15 @@ CMSIS-NN does not automatically outperform Cube.AI unless **manually optimized f
 ### Cube.AI
 
 **Pros**
-- Fast deployment
-- Minimal effort
-- Automatic memory management
-- Good for production pipelines
+- Fast deployment  
+- Automatically optimized execution  
+- Efficient memory handling  
+- Lower latency out-of-the-box  
 
 **Cons**
-- Limited visibility into execution
-- Hard to debug internal issues
-- Less control over quantization behavior
+- Limited visibility into internal execution  
+- Hard to debug layer-level issues  
+- Less control over quantization behavior  
 
 ---
 
@@ -908,35 +958,23 @@ CMSIS-NN does not automatically outperform Cube.AI unless **manually optimized f
 
 **Pros**
 - Full control over:
-  - data flow
-  - quantization
-  - memory layout
-- Deep understanding of inference internals
-- Easier to debug layer-wise issues
+  - data flow  
+  - quantization  
+  - memory layout  
+- Enables detailed debugging  
+- Provides deeper understanding of inference pipeline  
 
 **Cons**
-- High development effort
-- Manual debugging required
-- Easy to introduce subtle bugs (layout, scaling)
+- High development effort  
+- Easy to introduce structural and scaling errors  
+- Performance depends heavily on manual optimization  
 
 ---
 
-## 🔥 Real Debugging Insight (From This Project)
+## 🧠 Final Takeaway
 
-Major issues **only discovered using CMSIS-NN**:
-
-- Architecture mismatch (800 vs 1568)
-- Flatten layout mismatch
-- Quantization scaling instability
-
-👉 These issues would be extremely difficult to diagnose using Cube.AI alone
-
----
-
-## 🧠 Key Takeaway
-
-> Cube.AI is for **fast deployment**  
-> CMSIS-NN is for **deep control and understanding**
+> Cube.AI is optimized for **deployment and performance out-of-the-box**  
+> CMSIS-NN is designed for **control, debugging, and understanding**
 
 ---
 
@@ -945,25 +983,101 @@ Major issues **only discovered using CMSIS-NN**:
 | Scenario | Recommended Approach |
 |---------|---------------------|
 | Quick deployment | Cube.AI |
-| Production system | Cube.AI |
+| Production systems | Cube.AI |
 | Debugging model behavior | CMSIS-NN |
-| Custom optimization | CMSIS-NN |
-| Research / learning | CMSIS-NN |
+| Custom architecture control | CMSIS-NN |
+| Learning / research | CMSIS-NN |
 
 ---
 
 ## 🚀 Final Insight
 
-> CMSIS-NN is not just an alternative to Cube.AI  
-> It is a **tool to understand what Cube.AI hides**
+> CMSIS-NN is not a faster alternative by default  
 
---- 
+👉 It is a **low-level toolkit**, not a full deployment engine  
 
+👉 In this project:
+
+- Cube.AI provides **better performance out-of-the-box**  
+- CMSIS-NN provides **deeper control and visibility**  
+
+👉 Performance advantage depends on **manual optimization effort**, not just the library itself  
+
+---
+
+## 🧠 Performance Reality (This Work)
+
+| Observation | Result |
+|------------|-------|
+| CMSIS vs Cube.AI | ~6.8× slower |
+| Implementation type | Baseline (non-optimized) |
+| Correctness | ✅ Verified |
+| Optimization stage | Not yet performed |
+
+👉 This represents a **baseline CMSIS implementation**,  
+not an optimized one.
+
+---
 ## 🔥 Phase 3 Key Achievement
 > End-to-end pipeline validated:  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PyTorch → ONNX → Cube.AI → STM32 → UART → System Analysis
 
 --- 
+
+## 🎯 Model Accuracy & Validation
+
+### 📊 Training Accuracy (Phase 1)
+
+- CNN validation accuracy: ~99% (MNIST)
+
+---
+
+### 🔁 Cross-Platform Output Consistency
+
+To ensure deployment correctness, outputs were compared across:
+
+- PyTorch (baseline)
+- ONNX Runtime (CPU)
+- STM32 CMSIS-NN implementation
+
+---
+
+### ✅ Observations
+
+- ONNX outputs closely match PyTorch outputs  
+- STM32 outputs match integer reference implementation  
+- Final predicted class matches PyTorch for tested samples  
+
+📌 Example:
+
+| Platform | Predicted Class |
+|---------|----------------|
+| PyTorch | 7 |
+| ONNX | 7 |
+| STM32 (CMSIS-NN) | 7 |
+
+---
+
+### ⚠️ Quantization Impact
+
+- INT8 quantization introduces minor numerical differences  
+- No classification mismatch observed in tested samples  
+- Full dataset accuracy evaluation on STM32 not performed  
+
+---
+
+### 🧠 Key Insight
+
+> Deployment correctness was validated through **cross-platform consistency**,  
+> not full dataset accuracy evaluation on device
+
+---
+
+### 🚀 Conclusion
+
+- Model retains functional correctness after deployment  
+- Pipeline verified from training → ONNX → embedded inference  
+- Accuracy degradation (if any) is negligible for tested cases
 
 # 🗂️ Repository Structure
 
