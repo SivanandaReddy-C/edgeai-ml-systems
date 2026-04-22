@@ -1,9 +1,9 @@
 import os
 
-cnn_fp32 = "phase2/onnx/cnn.onnx"
-cnn_int8 = "phase2/onnx/cnn_int8.onnx"
-transformer_fp32 = "phase2/onnx/transformer.onnx"
-transformer_int8 = "phase2/onnx/transformer_int8.onnx"
+cnn_fp32 = "phase2/models/cnn.onnx"
+cnn_int8 = "phase2/models/cnn_int8.onnx"
+transformer_fp32 = "phase2/models/transformer.onnx"
+transformer_int8 = "phase2/models/transformer_int8.onnx"
 
 cnn_fp32_size = os.path.getsize(cnn_fp32) / 1024
 cnn_int8_size = os.path.getsize(cnn_int8) / 1024

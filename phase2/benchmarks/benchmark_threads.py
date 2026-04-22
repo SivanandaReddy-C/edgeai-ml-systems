@@ -13,7 +13,7 @@ for num_threads in thread_settings:
     so.intra_op_num_threads = num_threads
 
     session = ort.InferenceSession(
-        "phase2/onnx/transformer.onnx",
+        "phase2/models/transformer.onnx",
         sess_options=so,
         providers=["CPUExecutionProvider"]
     )

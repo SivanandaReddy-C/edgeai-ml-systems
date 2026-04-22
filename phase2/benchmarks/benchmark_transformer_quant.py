@@ -4,12 +4,12 @@ import onnxruntime as ort
 
 # Load sessions
 fp32_session = ort.InferenceSession(
-    "phase2/onnx/transformer.onnx",
+    "phase2/models/transformer.onnx",
     providers=["CPUExecutionProvider"]
 )
 
 int8_session = ort.InferenceSession(
-    "phase2/onnx/transformer_int8.onnx",
+    "phase2/models/transformer_int8.onnx",
     providers=["CPUExecutionProvider"]
 )
 

@@ -33,16 +33,16 @@ def compare_models(fp32_path, int8_path, input_shape, model_name):
 
 # CNN
 #compare_models(
-#   "phase2/onnx/cnn.onnx",
-#    "phase2/onnx/cnn_int8.onnx",
+#   "phase2/models/cnn.onnx",
+#    "phase2/models/cnn_int8.onnx",
 #    (1, 1, 28, 28),
 #    "CNN"
 #)
 
 # Transformer
 compare_models(
-    "phase2/onnx/transformer.onnx",
-    "phase2/onnx/transformer_int8.onnx",
+    "phase2/models/transformer.onnx",
+    "phase2/models/transformer_int8.onnx",
     (1, 28, 28),
     "Transformer"
 )

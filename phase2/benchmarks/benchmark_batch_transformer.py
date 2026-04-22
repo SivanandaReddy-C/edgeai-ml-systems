@@ -4,7 +4,7 @@ import onnxruntime as ort
 
 # Load model (FP32 only)
 session = ort.InferenceSession(
-    "phase2/onnx/transformer.onnx",
+    "phase2/models/transformer.onnx",
     providers=["CPUExecutionProvider"]
 )
 

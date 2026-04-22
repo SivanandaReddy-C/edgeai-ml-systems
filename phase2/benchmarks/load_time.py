@@ -14,10 +14,10 @@ def measure_load_time(model_path):
     return (end - start) *1000 #ms
 
 models = {
- "CNN FP32": "phase2/onnx/cnn.onnx",
-    "CNN INT8": "phase2/onnx/cnn_int8.onnx",
-    "Transformer FP32": "phase2/onnx/transformer.onnx",
-    "Transformer INT8": "phase2/onnx/transformer_int8.onnx",  
+ "CNN FP32": "phase2/models/cnn.onnx",
+    "CNN INT8": "phase2/models/cnn_int8.onnx",
+    "Transformer FP32": "phase2/models/transformer.onnx",
+    "Transformer INT8": "phase2/models/transformer_int8.onnx",  
 }
 
 print("\nModel Loadint Time (Cold Start):\n")

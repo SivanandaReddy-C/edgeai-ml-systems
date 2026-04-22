@@ -5,7 +5,7 @@ import onnxruntime as ort
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: python -m phase2.onnx.validate_onnx <model_path>")
+        print("Usage: python -m phase2.validation.validate_onnx <model_path>")
         sys.exit(1)
 
     model_path = sys.argv[1]

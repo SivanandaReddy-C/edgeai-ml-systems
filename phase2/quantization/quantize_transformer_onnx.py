@@ -1,8 +1,8 @@
 from onnxruntime.quantization import quantize_dynamic, QuantType
 
 quantize_dynamic(
-    model_input="phase2/onnx/transformer.onnx",
-    model_output="phase2/onnx/transformer_int8.onnx",
+    model_input="phase2/models/transformer.onnx",
+    model_output="phase2/models/transformer_int8.onnx",
     weight_type=QuantType.QInt8,
     per_channel=False 
 )

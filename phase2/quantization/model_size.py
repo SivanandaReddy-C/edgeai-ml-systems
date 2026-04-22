@@ -7,10 +7,10 @@ def get_size(path):
     return size_bytes, size_kb, size_mb
 
 models = {
-    "CNN FP32": "phase2/onnx/cnn.onnx",
-    "CNN INT8": "phase2/onnx/cnn_int8.onnx",
-    "Transformer FP32": "phase2/onnx/transformer.onnx",
-    "Transformer INT8": "phase2/onnx/transformer_int8.onnx",
+    "CNN FP32": "phase2/models/cnn.onnx",
+    "CNN INT8": "phase2/models/cnn_int8.onnx",
+    "Transformer FP32": "phase2/models/transformer.onnx",
+    "Transformer INT8": "phase2/models/transformer_int8.onnx",
 }
 
 print("\nModel Size Comparison:\n")

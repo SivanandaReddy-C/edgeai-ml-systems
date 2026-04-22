@@ -5,7 +5,7 @@ from memory_profiler import profile
 @profile
 def run_inference():
     session = ort.InferenceSession(
-        "phase2/onnx/transformer.onnx",
+        "phase2/models/transformer.onnx",
         providers=["CPUExecutionProvider"]
     )
 

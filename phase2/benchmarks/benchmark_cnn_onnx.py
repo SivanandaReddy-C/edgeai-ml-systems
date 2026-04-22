@@ -3,7 +3,7 @@ import numpy as np
 import onnxruntime as ort
 
 # Load ONNX model
-session = ort.InferenceSession("phase2/onnx/cnn.onnx")
+session = ort.InferenceSession("phase2/models/cnn.onnx")
 
 # Get input name dynamically
 input_name = session.get_inputs()[0].name

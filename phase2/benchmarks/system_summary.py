@@ -4,7 +4,7 @@ import numpy as np
 import onnxruntime as ort
 
 
-MODEL_PATH = "phase2/onnx/transformer.onnx"
+MODEL_PATH = "phase2/models/transformer.onnx"
 
 
 def get_model_size_kb(path: str) -> float:

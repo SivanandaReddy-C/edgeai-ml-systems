@@ -8,7 +8,7 @@ input_data = np.random.randn(1, 28, 28).astype(np.float32)
 
 for provider in providers:
     session = ort.InferenceSession(
-        "phase2/onnx/transformer.onnx",
+        "phase2/models/transformer.onnx",
         providers = [provider]
     )
 
