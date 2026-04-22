@@ -11,7 +11,8 @@ torch_model.eval()
 print("PyTorch Transformer loaded")
 
 # Load ONNX model
-onnx_session = ort.InferenceSession("phase2/onnx/transformer.onnx")
+onnx_model_path = "phase2/models/transformer.onnx"
+onnx_session = ort.InferenceSession(onnx_model_path)
 
 input_name = onnx_session.get_inputs()[0].name
 

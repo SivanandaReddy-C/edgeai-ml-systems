@@ -9,7 +9,8 @@ torch_model.load_state_dict(torch.load("phase1/best_cnn.pth"))
 torch_model.eval()
 
 # Load ONNX model
-onnx_session = ort.InferenceSession("phase2/onnx/cnn.onnx")
+onnx_model_path = "phase2/models/cnn.onnx"
+onnx_session = ort.InferenceSession(onnx_model_path)
 
 # Get input dynamically
 input_name = onnx_session.get_inputs()[0].name

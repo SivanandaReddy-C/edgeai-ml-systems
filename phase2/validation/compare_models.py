@@ -16,8 +16,11 @@ transformer.load_state_dict(torch.load("phase1/best_transformer.pth"))
 transformer.eval()
 
 # Load ONNX models
-cnn_sess = ort.InferenceSession("phase2/onnx/cnn.onnx")
-tr_sess = ort.InferenceSession("phase2/onnx/transformer.onnx")
+cnn_model_path = "phase2/models/cnn.onnx"
+tr_model_path = "phase2/models/transformer.onnx"
+
+cnn_sess = ort.InferenceSession(cnn_model_path)
+tr_sess = ort.InferenceSession(tr_model_path)
 
 cnn_input_name = cnn_sess.get_inputs()[0].name
 tr_input_name = tr_sess.get_inputs()[0].name
@@ -40,13 +43,12 @@ def benchmark(session, input_name, data, runs=100):
     for _ in range(runs):
         session.run(None, {input_name: data})
     end = time.perf_counter()
-    return (end - start) / runs * 1000 #ms
+    return (end - start) / runs * 1000  # ms
 
 # Run benchmarks
 cnn_latency = benchmark(cnn_sess, cnn_input_name, cnn_np)
 tr_latency = benchmark(tr_sess, tr_input_name, tr_np)
 
 # Results
-print(f"CNN ONN Latency: {cnn_latency:.4f} ms")
+print(f"CNN ONNX Latency: {cnn_latency:.4f} ms")
 print(f"Transformer ONNX Latency: {tr_latency:.4f} ms")
-
