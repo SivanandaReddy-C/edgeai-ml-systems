@@ -327,7 +327,7 @@ int main(void)
 	      total_issues += run_stress_test(network, test_images[i], test_names[i]);
 	  }
 
-	  printf("\r\n===Summary ===\r\n");
+	  printf("\r\n=== Day 12 Summary ===\r\n");
 	  printf("Total issue count: %lu\r\n", (unsigned long)total_issues);
 
 	  if (total_issues == 0) {

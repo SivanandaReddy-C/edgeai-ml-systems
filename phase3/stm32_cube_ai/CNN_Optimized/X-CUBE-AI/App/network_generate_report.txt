@@ -1,17 +1,17 @@
 ST Edge AI Core v2.2.0-20266 2adc00962
-Created date          : 2026-04-15 11:33:58
-Parameters            : generate --target stm32l4 --name network -m C:/Users/MIT/Documents/edgeai-ml-systems-phase1/phase2/onnx/cnn_optimized.onnx --compression none --verbosity 1 -O time --workspace C:/Users/MIT/AppData/Local/Temp/mxAI_workspace1730085699093004528674447919772492 --output C:/Users/MIT/.stm32cubemx/network_output
+Created date          : 2026-04-22 15:19:36
+Parameters            : generate --target stm32l4 --name network -m C:/Users/MIT/Documents/edgeai-ml-systems-phase1/phase2/models/cnn_optimized.onnx --compression none --verbosity 1 -O time --workspace C:/Users/MIT/AppData/Local/Temp/mxAI_workspace90023976604100848752654990126762 --output C:/Users/MIT/.stm32cubemx/network_output
 
 Exec/report summary (generate)
 ----------------------------------------------------------------------------------------------------------
-model file         :   C:\Users\MIT\Documents\edgeai-ml-systems-phase1\phase2\onnx\cnn_optimized.onnx     
+model file         :   C:\Users\MIT\Documents\edgeai-ml-systems-phase1\phase2\models\cnn_optimized.onnx   
 type               :   onnx                                                                               
 c_name             :   network                                                                            
 compression        :   none                                                                               
 options            :   allocate-inputs, allocate-outputs                                                  
 optimization       :   time                                                                               
 target/series      :   stm32l4                                                                            
-workspace dir      :   C:\Users\MIT\AppData\Local\Temp\mxAI_workspace1730085699093004528674447919772492   
+workspace dir      :   C:\Users\MIT\AppData\Local\Temp\mxAI_workspace90023976604100848752654990126762     
 output dir         :   C:\Users\MIT\.stm32cubemx\network_output                                           
 model_fmt          :   float                                                                              
 model_name         :   cnn_optimized                                                                      

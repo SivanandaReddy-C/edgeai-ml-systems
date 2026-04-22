@@ -3,14 +3,19 @@ __pycache__/
 *.pyc
 .ipynb_checkpoints/
 
+# VS Code
+.vscode/
+
 # Build folders
 Debug/
 Release/
 
 # Binaries
+*.o
 *.elf
 *.bin
 *.hex
+*.axf
 *.map
 *.list
 
