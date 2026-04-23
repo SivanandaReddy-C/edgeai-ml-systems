@@ -25,6 +25,16 @@ def benchmark_training(model, model_name):
     """
     train_loader,_ = get_dataloaders(batch_size=BATCH_SIZE)
 
+    if model_name == "Transformer":
+    # reshape input inside training loop
+        def transform_batch(x):
+            return x.squeeze(1)  # (B, 28, 28)
+
+        train_loader = [
+            (transform_batch(images), labels)
+            for images, labels in train_loader
+        ]
+
     model.train()
 
     criterion = torch.nn.CrossEntropyLoss()
@@ -57,13 +67,14 @@ def benchmark_single_inference():
     cnn.eval()
     transformer.eval()
 
-    dummy_input = torch.randn(1, 1, 28, 28)
+    cnn_input = torch.randn(1, 1, 28, 28)
+    transformer_input = torch.randn(1, 28, 28)
 
     #CNN
     start_time = time.perf_counter()
     with torch.no_grad():
         for _ in range(runs):
-            cnn(dummy_input)
+            cnn(cnn_input)
     end_time = time.perf_counter()
     cnn_latency = (end_time - start_time) * 1000 / runs
 
@@ -71,7 +82,7 @@ def benchmark_single_inference():
     start = time.perf_counter()
     with torch.no_grad():
         for _ in range(runs):
-            transformer(dummy_input)
+            transformer(transformer_input)
     end = time.perf_counter()
     transformer_latency = (end - start) * 1000 / runs
 
@@ -99,13 +110,14 @@ def benchmark_batch_inference():
     cnn.eval()
     transformer.eval()
 
-    dummy_batch = torch.randn(32, 1, 28, 28)
+    cnn_batch = torch.randn(32, 1, 28, 28)
+    transformer_batch = torch.randn(32, 28, 28)
 
     #CNN
     start_time = time.perf_counter()
     with torch.no_grad():
         for _ in range(runs):
-            cnn(dummy_batch)
+            cnn(cnn_batch)
     end_time = time.perf_counter()
     cnn_latency = (end_time - start_time) * 1000 / runs
 
@@ -113,7 +125,7 @@ def benchmark_batch_inference():
     start = time.perf_counter()
     with torch.no_grad():
         for _ in range(runs):
-            transformer(dummy_batch)
+            transformer(transformer_batch)
     end = time.perf_counter()
     transformer_latency = (end - start) * 1000 / runs
 

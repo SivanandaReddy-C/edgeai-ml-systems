@@ -1,33 +1,24 @@
-# Edge AI ML Systems
+# 🚀 Edge AI ML Systems
 
-![Python](https://img.shields.io/badge/Python-3.10-blue)
-![PyTorch](https://img.shields.io/badge/PyTorch-DeepLearning-red)
-![ONNX](https://img.shields.io/badge/ONNX-Runtime-green)
-![Status](https://img.shields.io/badge/Status-Active-success)
+![Python](https://img.shields.io/badge/Python-3.10-blue)  
+![PyTorch](https://img.shields.io/badge/PyTorch-DeepLearning-red)  
+![ONNX](https://img.shields.io/badge/ONNX-Runtime-green)  
+![Status](https://img.shields.io/badge/Status-Active-success)  
 ![Focus](https://img.shields.io/badge/Focus-ML%20Systems-orange)
 
-> 🚀 End-to-end ML Systems project covering training, deployment, and performance optimization for edge AI applications.
+> End-to-end ML systems project covering **model development → deployment → embedded execution → system-level analysis**
 
 ---
 
-## 🚀 Project Overview
+# 🔥 Project Overview
 
-This project implements an **end-to-end ML systems pipeline**, covering:
+This project implements a **complete ML systems pipeline** across three phases:
 
-- **Phase 1:** Model Development & Benchmarking  
-- **Phase 2:** Deployment & Optimization (ONNX Runtime)  
-- **Phase 3:** Embedded Deployment on STM32  
-  - Cube.AI (high-level)
-  - CMSIS-NN (low-level manual pipeline)  
-
-Focus areas:
-
-- Model training and architecture design  
-- Performance profiling and benchmarking  
-- Deployment optimization using ONNX Runtime  
-- Embedded AI execution on STM32 (Cortex-M4)  
-- System-level analysis (latency, throughput, memory)
-
+| Phase | Focus |
+|------|------|
+| Phase 1 | Model development, profiling, benchmarking |
+| Phase 2 | ONNX deployment, quantization, system optimization |
+| Phase 3 | Embedded deployment on STM32 (Cube.AI + CMSIS-NN) |
 
 ---
 
@@ -37,33 +28,35 @@ Most ML work stops at training.
 
 This project answers:
 
-- How does a model behave **after deployment?**
-- What breaks when moving to **edge devices?**
-- What really limits performance — **compute, memory, or tooling?**
+- What happens **after training**?
+- What breaks during **deployment**?
+- What actually limits performance:
+  - compute?
+  - memory?
+  - toolchain?
 
 ---
 
 ## 💡 Highlights
 
 - Built CNN and Transformer from scratch  
-- Achieved **~5–10× speedup** using ONNX Runtime  
+- Achieved **~5–10× speedup using ONNX Runtime**  
 - Implemented INT8 quantization and analyzed limitations  
-- Identified runtime constraints (`ConvInteger` unsupported)  
-- Performed full system benchmarking (latency, throughput, memory)  
+- Identified real deployment blockers (`ConvInteger`)  
 - Deployed models on **STM32 Cortex-M4**  
 - Reduced Flash usage by **~24× via architecture redesign**  
-- Built **manual CMSIS-NN inference pipeline from scratch**  
-- Debugged real deployment issues (quantization, layout, architecture mismatch)
+- Built full **CMSIS-NN manual inference pipeline**  
+- Debugged real-world issues:
+  - quantization scaling  
+  - tensor layout mismatch  
+  - architecture mismatch  
 
 ---
 
 # 🔹 Phase 1 — Model Development & Benchmarking
 
-## 🎯 Objectives
-
-- CNN training pipeline
-- Transformer encoder from scratch
-- Profiling & benchmarking
+## 🎯 Objective
+Build models from scratch and understand their performance characteristics.
 
 ---
 
@@ -74,7 +67,7 @@ This project answers:
 ---
 ## 🧱 Models Implemented
 
-### CNN Architecture
+### 1. CNN Architecture
 
 Input (1×28×28)
 
@@ -94,7 +87,7 @@ Input (1×28×28)
 
 ---
 
-### Transformer Encoder
+### 2. Transformer Encoder
 
 <p align="center">
   <img src="docs/transformer_encoder1.png" alt="Transformer">
@@ -127,28 +120,19 @@ Forward Pass → Loss Calculation → Backpropagation → Optimizer Update
 | Batch Latency (32) | 1.164 ms | 2.641 ms |
 | Parameters | 206,922 | 102,474 |
 | Peak Memory | ~335 MB | ~335 MB |
-| Best DataLoader Workers | \- | 2 |
+
+**Command used:**
+```  
+python -m phase1.benchmarks.benchmark
+```
 ---
 
-## 🔍 Key Insights (Phase 1)
+## 🔍 Phase 1 - Key Insights 
 
-- Transformer models have fewer parameters but higher computational complexity due to attention mechanisms (O(n²)).
-- CNN is significantly faster for image-based tasks due to localized convolution operations.
-- Transformer shows slower training and inference despite lower parameter count.
-- Batch inference reduces the performance gap but CNN remains more efficient.
-- Peak memory usage is similar for both models in this setup, indicating that activations and runtime dominate memory usage.
-- DataLoader performance depends on system configuration and is independent of model architecture.
-
----
-
-## 🧠 Engineering Learnings
-
-- Parameter count alone does not determine model efficiency.
-- Attention mechanisms introduce quadratic complexity with sequence length.
-- Profiling tools like cProfile and memory_profiler are essential for identifying bottlenecks.
-- Backpropagation is the most computationally expensive step in training.
-- Data loading can become a bottleneck without proper tuning.
-- Benchmarking should evaluate training, inference, and memory — not just accuracy.
+- CNN faster despite more parameters  
+- Transformer slower due to **O(n²) attention cost**  
+- Batch improves throughput but not latency parity  
+- Memory dominated by runtime activations  
 
 ---
 
@@ -179,126 +163,188 @@ Converted PyTorch models into ONNX format for deployment.
 - Handled input shapes carefully  
 - Ensured ONNX Runtime compatibility  
 
+**Commands used:**
+```    
+python -m phase2.export.export_cnn_onnx  
+python -m phase2.export.export_transformer_onnx
+```
 ---
 
-## ✅ Step 2 — Validation
+## ✅ Step 2 — ONNX Validation
 
 Validated ONNX outputs against PyTorch.
 
 - Mean numerical difference: **~1e-6**  
-- Prediction match: **100%**
+- Prediction match: **100%** 
 
-📌 Confirms correctness of conversion  
+**Commands used:**
+```  
+python -m phase2.validation.validate_onnx_vs_pytorch cnn
+python -m phase2.validation.validate_onnx_vs_pytorch transformer
+```
+### 🧠 Observations
+- ONNX outputs closely match PyTorch outputs for both models  
+- No prediction mismatch observed
 
+📌 Key Insight:  
+- Conversion to ONNX preserves both numerical correctness and model behavior
 ---
 ## ⚙️ Step 3 — Quantization
 
 Applied INT8 quantization to optimize model size.
 
-### Model Size Comparison
+### 📊 Model Size Comparison
 
 | Model | FP32 | INT8 |
 |------|------|------|
 | CNN | 810.15 KB | 208.24 KB |
 | Transformer | 1681.38 KB | 1692.51 KB |
 
-### Observations
+### 📊 FP32 vs INT8 Output Comparison
+| Metric | CNN FP32 vs INT8 | Transformer FP32 vs INT8 |
+|------|-------------|-------------|
+| Mean Output Difference | — | Small (~1e-2 to 1e-1) |
+| Prediction Match | — | ✅ Yes |
+| Runtime Execution | ❌ Not Supported  | ✅ Supported |
 
-- CNN achieves **~4× reduction**  
-- Transformer shows **minimal change**  
-- CNN INT8 fails due to `ConvInteger` operator limitation  
+**Commands used:**
+```   
+python -m phase2.quantization.quantize_cnn_onnx
+python -m phase2.quantization.quantize_transformer_onnx
+python -m phase2.quantization.model_size
+python -m phase2.quantization.compare_models cnn
+python -m phase2.quantization.compare_models transformer
+```
+### 🧠 Observations
+- CNN achieves ~4× size reduction after quantization
+- Transformer shows minimal size change
+- CNN INT8 model fails due to unsupported ConvInteger operator
+- Transformer INT8 model executes successfully 
 
-📌 Quantization effectiveness depends on architecture and runtime support  
+📌 Key Insight:
+- Quantization effectiveness depends on:
+  - **model architecture**
+  - **operator support in runtime**
+
+👉 Quantization success ≠ deployment success
 
 ---
 
 ## ⚡ Step 4 — Performance Benchmarking
 
-### PyTorch vs ONNX
+### 📊 PyTorch vs ONNX
 
 | Model | PyTorch Latency | ONNX Latency |
 |------|----------------|-------------|
-| CNN | ~0.7314 ms | ~0.0926 ms |
+| CNN | ~0.2902 ms | ~0.0926 ms |
+| Transformer | ~0.8869 ms | ~0.2826 ms |
 
-📌 ONNX Runtime achieves **~5–10× speedup**
+**Commands used:**
+```  
+python -m phase2.benchmarks.benchmark_pytorch_vs_onnx cnn
+python -m phase2.benchmarks.benchmark_pytorch_vs_onnx transformer
+```
+#### 🧠 Observations:
+- ONNX provides consistent latency reduction (~3–5×)
+- CNN benefits more due to efficient convolution operations
+- Transformer remains slower due to attention complexity (O(n²))
 
+📌 Key Insight:  
+- ONNX improves execution efficiency, but model architecture dominates latency
 ---
 
-### CNN vs Transformer (ONNX — Quick Comparison)
-
-| Model | Latency |
-|------|--------|
-| CNN | 0.0901 ms |
-| Transformer | 0.3912 ms |
-
-📌 Single-run comparison for quick insight  
-📌 CNN is faster due to convolution efficiency  
-📌 Transformer has higher compute cost due to attention  
-
----
-
-### Inference Latency (Baseline — Averaged)
-
-📌 Note:
-
-- Quick comparison above = **single-run latency**
-- Below = **averaged latency over multiple runs (more reliable)**
+### 📊 ONNX FP32 vs ONNX INT8 
 
 | Model | FP32 | INT8 |
 |------|------|------|
-| CNN | ~0.2–0.3 ms | ❌ Not Supported |
+| CNN | ~0.0926 ms | ❌ Not Supported |
 | Transformer | ~0.27 ms | ~0.4–0.5 ms |
 
-📌 Represents stable model execution time  
+**Commands used:**
+```  
+python -m phase2.benchmarks.benchmark_onnxFP32_vs_onnxINT8 cnn
+python -m phase2.benchmarks.benchmark_onnxFP32_vs_onnxINT8 transformer
+```
+#### 🧠 Observations:
+- CNN INT8 model cannot be executed
+- Transformer INT8 runs but shows no speedup
 
+📌 Key Insight:
+- Quantization does not guarantee performance improvement
 ---
-
 
 ## 🧠 Step 5 — System Analysis
 
-### End-to-End Latency (Transformer)
+### 📊 End-to-End Latency
 
-| Stage | Time |
-|------|------|
-| Preprocessing | 0.0145 ms |
-| Inference | 0.2540 ms |
-| Postprocessing | 0.0073 ms |
-| **Total** | **0.2762 ms** |
+| Stage | CNN Time | Transformer Time |
+|------|------|------|
+| Preprocessing | 0.0174 ms | 0.0145 ms |
+| Inference | 0.0687 ms | 0.2540 ms |
+| Postprocessing | 0.0066 ms | 0.0073 ms |
+| **Total** | **0.0930 ms** | **0.2762 ms** |
 
-📌 ~92% latency from inference → compute-bound system  
+**Commands used:**
+```  
+python -m phase2.benchmarks.end_to_end_latency cnn
+python -m phase2.benchmarks.end_to_end_latency transformer
+```
 
----
-### Thread Optimization (Transformer on CPU)
+#### 🧠 Observations:
+- Inference dominates (~90%) of total latency
+- CNN is faster due to lower compute complexity
 
-| Threads | Latency |
-|--------|--------|
-| 1 | 0.1277 ms |
-| 2 | 0.1773 ms |
-| 4 | 0.1608 ms |
-| 8 | 0.2017 ms |
-
-📌 Observations:
-- Increasing threads **degraded performance**
-- Overhead dominates for small models  
+📌 Key Insight:
+- System is **compute-bound**  
 
 ---
+### 📊 Thread Optimization (CPU)
 
-### Batch Processing (Transformer - Throughput vs Latency)
+| Threads | CNN Latency | Transformer Latency |
+|--------|--------|--------|
+| 1 | 0.0383 ms |0.1277 ms |
+| 2 | 0.0368 ms | 0.1773 ms |
+| 4 | 0.0323 ms | 0.1608 ms |
+| 8 | 0.0398 ms | 0.2017 ms |
 
-| Batch | Latency | Throughput |
-|------|--------|------------|
-| 1 | 0.2781 ms | 3595 samples/sec |
-| 2 | 0.4311 ms | 4639 samples/sec |
-| 4 | 0.6364 ms | 6285 samples/sec |
-| 8 | 1.0101 ms | 7920 samples/sec |
-| 16 | 1.5844 ms | 10098 samples/sec |
+**Commands used:**
+```  
+python -m phase2.benchmarks.benchmark_threads cnn
+python -m phase2.benchmarks.benchmark_threads transformer
+```
 
-📌 Observations:
-- Larger batches increase throughput  
-- Latency increases → trade-off exists  
+#### 🧠 Observations:
+- Increasing threads does not improve performance
+- Overhead dominates for small models
+
+📌 Key Insight:
+- Multi-threading is ineffective for lightweight workloads
 
 ---
-### Load Time (Cold Start)
+
+### 📊 Batch Processing 
+
+| Batch | CNN Latency | CNN Throughput | Transformer Latency | Transformer Throughput |
+|------|------------|----------------|---------------------|------------------------|
+| 1    | 0.0799 ms  | 12510.18 samples/sec | 0.2781 ms | 3595 samples/sec |
+| 2    | 0.0953 ms  | 20994.20 samples/sec | 0.4311 ms | 4639 samples/sec |
+| 4    | 0.0927 ms  | 43140.31 samples/sec | 0.6364 ms | 6285 samples/sec |
+| 8    | 0.1233 ms  | 64870.51 samples/sec | 1.0101 ms | 7920 samples/sec |
+| 16   | 0.1457 ms  | 109826.82 samples/sec | 1.5844 ms | 10098 samples/sec |
+
+**Commands used:**
+```  
+python -m phase2.benchmarks.benchmark_batch cnn
+python -m phase2.benchmarks.benchmark_batch transformer
+```
+#### 🧠 Observations:
+- Throughput increases with batch size
+- Latency also increases → trade-off
+
+📌 Key Insight:
+- Batching improves throughput but not suitable for real-time systems
+---
+### 📊 Load Time (Cold Start)
 
 | Model | Load Time |
 |------|----------|
@@ -307,96 +353,118 @@ Applied INT8 quantization to optimize model size.
 | Transformer FP32 | 17.83 ms |
 | Transformer INT8 | 22.31 ms |
 
-📌 Observations:
-- Load time >> inference latency  
-- Critical for real-time systems and APIs  
+**Commands used:**
+```  
+python -m phase2.benchmarks.load_time
+```
+
+#### 🧠 Observations:
+
+- Load time >> inference latency
+
+📌 Key Insight:
+- Cold start latency is a **critical bottleneck** in deployment scenarios  
 
 ---
-### System Summary (Transformer)
+### 📊 System Summary
 
-| Metric | Value |
-|------|------|
-| Model Size | 1681.38 KB |
-| Load Time | 16.21 ms |
-| Inference Latency | 0.2688 ms |
-| End-to-End Latency | 0.3048 ms |
+| Metric | CNN | Transformer |
+|------|------|------|
+| Model Size | 809.77 KB | 1681.38 KB |
+| Load Time | 6.32 ms | 16.21 ms |
+| Inference Latency | 0.0754 ms | 0.2688 ms |
+| End-to-End Latency | 0.1161 ms | 0.3048 ms |
 
-📌 Cold start ≈ **60× slower than inference**
+**Commands used:**
+```  
+python -m phase2.benchmarks.system_summary cnn
+python -m phase2.benchmarks.system_summary transformer
+```
+
+#### 🧠 Observations:
+
+- CNN consistently outperforms Transformer
+
+📌 Key Insight:
+- Model architecture is the primary driver of system performance
+---
+
+## ⚙️ Execution Providers
+
+### 🔍 Available Providers in my system
+
+**Command used:**
+```
+python -m phase2.validation.check_providers
+```
+Output: 
+```
+Available providers:
+['AzureExecutionProvider', 'CPUExecutionProvider']
+```
+
+### ⚡ Provider Benchmark Results
+| Model | Provider | Latency |
+|------|------|------|
+| CNN | CPUExecutionProvider | ~0.0775 ms |
+| Transformer | CPUExecutionProvider | ~0.2775 ms | 
+
+**Commands used:**
+```
+python -m phase2.benchmarks.benchmark_provider cnn
+python -m phase2.benchmarks.benchmark_provider transformer
+```
+
+#### 🧠 Observations
+
+- All inference in this project is executed using CPUExecutionProvider  
+
+📌 Key Insight:
+Execution backend significantly impacts performance
+
+### ⚠️ Why Other Providers Were Not Used
+- AzureExecutionProvider:
+  - Designed for cloud-based execution
+  - Not relevant for local benchmarking
+- GPU providers:
+  - Not available in current environment
+  - No CUDAExecutionProvider or hardware acceleration backend
 
 ---
 
-## ⚠️ Deployment Constraints
+## 🔍 Phase 2 - Key Insights
 
-- CNN INT8 fails due to unsupported `ConvInteger` operator  
-- Runtime operator support determines deployability  
-- Quantization success ≠ execution success  
+- ONNX Runtime provides **consistent inference acceleration across models**  
+- Model architecture strongly influences performance:
+  - CNN → efficient and low-latency  
+  - Transformer → compute-intensive  
 
-📌 Model conversion does not guarantee deployment  
+- Quantization:
+  - reduces model size 
+  - but does not guarantee speedup  
+  - depends on runtime operator support  
 
----
+- CNN INT8 fails due to backend limitations (`ConvInteger`)  
+- Transformer INT8 executes but offers **limited performance benefit**
 
-## 🔍 Key Insights (Phase 2)
-
-- ONNX significantly reduces inference latency  
-- Quantization reduces size but does not guarantee speedup  
-- CNN INT8 failed due to backend limitations  
-- Transformer INT8 works but offers limited benefit  
-- Increasing threads can degrade performance  
+- Increasing threads does not improve performance for small models  
 - Batch size improves throughput but increases latency  
-- Inference dominates total latency (~90%)  
-- Cold start latency is a major deployment bottleneck  
 
----
+- Inference dominates system latency (~90%)  
+- Cold start (load time) is a major deployment bottleneck  
 
-## 🧠 Engineering Learnings
-
-### 1. Quantization is Not Always Beneficial
-- May not improve latency  
-- Depends on hardware and operator support  
-
-
-
-### 2. Runtime Compatibility Matters
-- Conversion ≠ Deployment  
-- Backend determines feasibility  
-
-
-
-### 3. System is Compute-Bound
-- Optimize inference, not pipeline  
-
-
-
-### 4. Cold Start vs Steady State
-- Load time is significantly higher than inference  
-
-
-
-### 5. Throughput vs Latency Trade-off
-- Larger batches improve throughput  
-- Smaller batches reduce latency  
+📌 **Final Insight:**
+- Efficient ML deployment depends on **model architecture + runtime support + system constraints**, not just model accuracy.
 
 ---
 
 # 🔹 Phase 3 — Embedded Deployment on STM32
 
 ## 🎯 Objective
-Deploy optimized ML models on **resource-constrained embedded hardware (STM32 Cortex-M4)** and analyze real execution behavior beyond desktop environments.
+Deploy models on **Cortex-M4** and analyze real constraints.
 
 ---
-
-## ⚙️ Step 1 — Environment Setup
-
-- Installed STM32CubeIDE  
-- Verified CubeMX configuration  
-- Installed X-CUBE-AI package  
-- Created STM32 project for B-L4S5I-IOT01A  
-
-📌 Build status: **0 errors**
-
----
-
-## ⚙️ Step 2 — Model Validation (Pre-Deployment)
+## Model Validation (Pre-Deployment)
 
 Validated ONNX models before deploying to embedded target:
 
@@ -411,101 +479,41 @@ Validated ONNX models before deploying to embedded target:
 Deployment feasibility depends on **operator support**, not just model correctness.
 
 ---
+## ⚙️ Cube.AI Deployment 
+---
+### CNN
 
-## ⚙️ Step 3 — Cube.AI Model Analysis
-
-Imported CNN model into STM32Cube.AI:
-
-### Baseline CNN
-
-- Flash: ~822 KB  
-- RAM: ~22 KB  
+| Metric | Value |
+|------|------|
+| Flash | ~822 KB |
+| RAM | ~22 KB |
+| Latency | ~125.67 ms |
 
 📌 Observation:  
 - Fully Connected (FC) layer dominates memory (~97% of Flash)
 
 ---
 
-## 🧠 Step 4 — Model Optimization  
+### ⚠️ Transformer
+❌ Failed on STM32:   
+Unsupported: LayerNormalization
+👉 Transformer not feasible on Cortex-M4 using Cube.AI  
+---
+
+### CNN model Optimization  
 
 Redesigned CNN architecture for embedded deployment:  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Conv → Conv → Global Averaging Pooling → FC(32 → 10) 
 
 
-### Key Changes
-
+📌 Key Changes:
 - Removed Flatten + large FC layer  
 - Introduced Global Average Pooling (GAP)  
 
 📌 Result:
 - Drastic reduction in parameters  
 
----
-
-## 🔥 Step 5 — Memory Optimization Results
-
-| Model | Flash | RAM |
-|------|------|-----|
-| Original CNN | ~822 KB | ~22 KB |
-| Optimized CNN | ~34 KB | ~21.5 KB |
-
-👉 **~24× reduction in Flash memory**
-
-📌 Insight:
-- Flash → dominated by weights  
-- RAM → dominated by activations  
-
----
-
-## ⚙️ Step 6 — STM32 Firmware Integration
-
-- Generated STM32 project using CubeMX  
-- Imported optimized model into Cube.AI  
-- Used **low-level `network.c` API** for integration  
-- Configured UART for logging  
-- Implemented `printf` retarget using `_write()`  
-
----
-
-## 🚀 Step 7 — On-Device Inference Execution
-
-Successfully executed inference on STM32:
-
-- Input: dummy tensor `[1, 28, 28, 1]`  
-- Output: 10-class logits  
-- Output observed via UART  
-
-### Example Output Behavior
-
-- Stable across iterations  
-- Deterministic for fixed input  
-
-📌 Confirms:
-- Correct model execution  
-- Proper firmware integration  
-
----
-
-## ⚠️ Challenges Faced
-
-- CNN INT8 model failed due to unsupported operators (`ConvInteger`)  
-- ONNX export issues due to opset mismatch  
-- Reshape/Flatten incompatibility in Cube.AI  
-  → resolved using tensor indexing  
-- UART `printf` not working initially  
-  → resolved using `_write()` retarget and correct initialization order  
-
----
-
-## 🔥 Phase 3 — Extended System Analysis
-
-This section extends Phase 3 beyond deployment into **detailed system-level evaluation** using real STM32 execution data.
-
----
-
-## 📊 Model Comparison on STM32
-
-| Metric | Baseline CNN | Optimized CNN |
+ Metric | CNN | Optimized CNN |
 |------|-------------|--------------|
 | Parameters | ~206K | ~5K |
 | Flash | ~822 KB | ~34 KB |
@@ -513,29 +521,20 @@ This section extends Phase 3 beyond deployment into **detailed system-level eval
 | MACs | ~1.25M | ~1.05M |
 | Latency | ~125.67 ms | ~107.08 ms |
 
----
-
-## 🧠 Memory Behavior
-
+📌 Insight:
 - Flash dominated by FC layer (~97%)
 - Optimization removes FC bottleneck → ~24× reduction
 - RAM unchanged → activation dominated (~21 KB)
-
-👉 Weight optimization ≠ runtime memory optimization  
-
----
-
-## ⚙️ Compute & Latency Analysis
-
 - Conv2 layer dominates (~85% MACs)
 - System is **compute-bound**
 - FP32 arithmetic is primary bottleneck
 
+👉 Weight optimization ≠ runtime memory optimization  
 👉 Parameter reduction does NOT linearly reduce latency  
 
 ---
 
-## ⚙️ Cube.AI Optimization Modes
+### Cube.AI Optimization Modes
 
 | Mode | Latency | RAM |
 |------|--------|-----|
@@ -547,7 +546,7 @@ This section extends Phase 3 beyond deployment into **detailed system-level eval
 
 ---
 
-## ⚠️ INT8 Deployment Limitation
+### ⚠️ INT8 Deployment Limitation
 
 INT8 model failed during Cube.AI Analyze:
 
@@ -556,8 +555,7 @@ Unsupported operators:
 - MatMulInteger  
 - DynamicQuantizeLinear  
 
-### Insight
-
+📌 Insight:
 - ONNX INT8 ≠ STM32-compatible INT8  
 - External quantization not supported  
 
@@ -565,36 +563,7 @@ Unsupported operators:
 
 ---
 
-## 🧪 Stability & Robustness Testing
-
-Tested with:
-- Valid MNIST input  
-- Zero input  
-- Max input  
-- Noise input  
-- 200 repeated runs  
-
-### Results
-
-- Failed runs: 0  
-- Invalid outputs: 0  
-- Prediction changes: 0  
-- Stable latency (~126 ms)
-
-### Edge Behavior
-
-| Input | Prediction |
-|------|-----------|
-| Zero | 1 |
-| Max | 5 |
-| Noise | 3 |
-
-👉 Model always produces valid output  
-👉 Stable but not semantically reliable for invalid inputs  
-
----
-
-## 🧠 System-Level Insights
+### 🧠 System-Level Insights
 
 - Embedded ML is dominated by:
   - Convolution compute
@@ -609,189 +578,40 @@ Tested with:
 
 ---
 
-## ⚠️ Limitations
 
-- FP32 inference latency is high (~100+ ms)  
-- INT8 deployment unsupported  
-- No CMSIS-NN optimization yet  
+## 🔥 CMSIS-NN Manual Pipeline 
 
----
+### 🎯 Objective
 
-# 🔥 Step 7 — CMSIS-NN Manual Inference Pipeline (Week 3)
-
-## 🎯 Objective
-
-Move beyond Cube.AI and build a **manual CNN inference pipeline using CMSIS-NN (INT8)** to understand low-level execution on Cortex-M4.
-
-Target pipeline:
-
-Input → Conv1 → ReLU → MaxPool  
-→ Conv2 → ReLU → MaxPool  
-→ Flatten → FC1 → ReLU → FC2
+Build full CNN inference manually using INT8.
 
 ---
 
-## ⚙️ Implementation Details
+### ⚙️ Implementation Details
 
 - CMSIS-NN manually integrated into STM32 project
 - INT8 weights and activations used across all layers
 - INT32 accumulation used to avoid overflow
 - Explicit requantization using **multiplier + shift**
 - Custom fully connected layer (`linear_s8`) implemented
-- Stage-wise outputs printed via UART for validation
 - Real PyTorch-learned parameters exported into C arrays and executed on STM32
 
 ---
+### 📊 Final Results
 
-## 🧪 Week 3 Progress Summary
+| Metric | Value |
+|------|------|
+| Cycles | ~103.8M |
+| Latency | ~865.46 ms |
+| Prediction | Matches PyTorch |
 
-| Day | Milestone | Result |
-|------|----------|--------|
-| Day 15 | CMSIS-NN integration into STM32 project | ✅ Successful |
-| Day 16 | Fixed-point inference study | ✅ Understood and validated |
-| Day 17 | Minimal CMSIS-NN convolution test | ✅ Correct output verified |
-| Day 18 | Real Conv1 weights on STM32 | ✅ Working |
-| Day 19 | Conv1 requantization fix | ✅ Stable, non-saturated output |
-| Day 20 | Conv1 → ReLU → MaxPool pipeline | ✅ Working |
-| Day 21 | Added Conv2 | ✅ Working |
-| Day 22 | Added Conv2 → ReLU → MaxPool | ✅ Working |
-| Day 23 | Added Flatten + FC1 + FC2 | ✅ Full pipeline executed |
-| Day 24 | PyTorch vs STM32 validation | ✅ Root cause identified |
-| Day 25 | Architecture + layout fix | ✅ STM32 prediction matched PyTorch |
+
 
 ---
 
-## 📊 Stage-Wise Results
+### ⚠️ Key Debugging Challenges
 
-### Day 17 — First Real CMSIS-NN Convolution
-
-Minimal convolution layer validated successfully on STM32.
-
-**Validation setup**
-- Input tensor: `4 × 4`
-- Kernel: `3 × 3`
-- Output tensor: `2 × 2`
-
-**Expected raw output**
-- `[-6, -6, -6, -6]`
-
-**Observed STM32 output**
-- `[-6, -6, -6, -6]`
-
-**Status**
-- `ARM_CMSIS_NN_SUCCESS (0)`
-
-📌 Result:  
-Verified that CMSIS-NN convolution was executing correctly independent of later multi-layer pipeline issues.
-
----
-
-### Day 18 — Real Conv1 Layer on STM32
-
-Integrated real Conv1 weights exported from PyTorch.
-
-**Validation setup**
-- Input: MNIST-style `28 × 28` image
-- Kernel size: `3 × 3`
-- Output tensor: `26 × 26 × 16`
-
-**Results**
-- Conv1 status: `0`
-- Output sample: non-zero and varied
-- Saturation count: `+127 = 0`, `-128 = 0`
-
-📌 Result:  
-First real learned CNN layer successfully executed on STM32.
-
----
-
-### Day 19 — Conv1 Requantization Fix
-
-Corrected multiplier/shift handling for Conv1.
-
-**Results**
-- Conv1 status: `0`
-- Conv1 output min/max: `-40 / 47`
-- Saturation: `+127 = 0`, `-128 = 0`
-
-📌 Result:  
-Conv1 output became numerically meaningful, stable, and suitable for chaining into later layers.
-
----
-
-### Day 20 — Conv1 → ReLU → MaxPool
-
-Extended the single-layer test into a mini inference pipeline.
-
-**Results**
-- Conv1 output sample: structured signed values
-- ReLU output sample: negative values removed correctly
-- MaxPool output sample: strongest activations preserved
-- Conv1 min/max: `-40 / 47`
-- ReLU min/max: `0 / 47`
-- MaxPool min/max: `0 / 47`
-
-📌 Result:  
-Confirmed stable tensor propagation across Conv1, ReLU, and MaxPool.
-
----
-
-### Day 21 — Added Conv2
-
-Integrated Conv2 using pooled Conv1 output as input.
-
-**Results**
-- Conv2 status: `0`
-- Conv2 output sample: structured signed values
-- Conv2 min/max: `-106 / 80`
-- Saturation: `+127 = 0`, `-128 = 0`
-
-📌 Result:  
-Two-layer quantized CNN pipeline became functional on STM32.
-
----
-
-### Day 22 — Conv2 → ReLU → MaxPool
-
-Extended the pipeline deeper and validated downstream feature flow.
-
-**Results**
-- Conv2 output sample: structured signed values
-- Conv2 ReLU output: negatives removed correctly
-- Conv2 MaxPool output: strong activations preserved
-- Conv2 min/max: `-106 / 80`
-- Conv2 ReLU min/max: `0 / 80`
-- Conv2 MaxPool min/max: `0 / 80`
-
-📌 Result:  
-Confirmed stable multi-stage CNN feature extraction on STM32.
-
----
-
-### Day 23 — Full CNN Inference Path
-
-Added Flatten, FC1, ReLU, and FC2 to build complete end-to-end inference.
-
-**Results**
-- Flatten output sample: valid pooled feature vector observed
-- FC1 output sample: structured signed values
-- FC1 ReLU output sample: negatives removed correctly
-- FC2 logits: `-12 -11 8 -25 9 -26 -25 -5 -9 -15`
-- Predicted class: `4`
-
-**Ranges**
-- FC1 min/max: `-62 / 70`
-- FC1 ReLU min/max: `0 / 70`
-- FC2 min/max: `-26 / 9`
-
-📌 Result:  
-End-to-end CNN inference executed successfully on STM32, but prediction still did not match PyTorch.
-
----
-
-## ⚠️ Key Debugging Challenges
-
-### 1. Quantization Scaling Issues
+#### 1. Quantization Scaling Issues
 
 - Incorrect multiplier/shift caused valid outputs to collapse to zero
 - Required layer-wise tuning of output scales
@@ -802,7 +622,7 @@ Quantization correctness is critical — wrong scaling destroys meaningful infer
 
 ---
 
-### 2. Input Representation
+#### 2. Input Representation
 
 - Direct int8 handling of image input caused incorrect mapping
 - Fixed by:
@@ -814,7 +634,7 @@ Input representation directly affects downstream convolution correctness.
 
 ---
 
-### 3. Architecture Mismatch (Critical Issue)
+#### 3. Architecture Mismatch (Critical Issue)
 
 During PyTorch vs STM32 comparison, the key mismatch was identified:
 
@@ -830,7 +650,7 @@ Even correct integer math could not match the trained model because the deployed
 
 ---
 
-### 4. Flatten Layout Mismatch (Critical Issue)
+#### 4. Flatten Layout Mismatch (Critical Issue)
 
 Initial assumption:
 - Flatten needed a manual HWC → CHW reorder before FC1
@@ -840,7 +660,6 @@ Actual behavior:
 - Manual reorder scrambled the data and broke FC behavior
 
 **Final fix**
-```c
 for (int i = 0; i < 7 * 7 * 32; i++) {
     flatten_out[i] = conv2_pool_out[i];
 }
@@ -848,33 +667,9 @@ for (int i = 0; i < 7 * 7 * 32; i++) {
 ---
 
 
-# ⚖️ CMSIS-NN vs Cube.AI Comparison
+## ⚖️ CMSIS-NN vs Cube.AI Comparison
 
-## 🎯 Objective
-
-Compare two deployment approaches on STM32 using the **same CNN architecture**:
-
-- CNN:  
-  Conv → Conv → Flatten → FC(1568 → 128 → 10)
-
-This ensures a **fair comparison** across identical model structure.
-
----
-
-## 📊 Comparison Summary
-
-| Aspect | Cube.AI | CMSIS-NN |
-|-------|--------|----------|
-| Integration Effort | Very low | High (manual implementation) |
-| Control over pipeline | Limited | Full control |
-| Development Time | Fast | Slow |
-| Debug visibility | Limited | Full (layer-wise inspection) |
-| Flexibility | Low | High |
-| Quantization control | Hidden (tool-driven) | Explicit (manual scaling) |
-
----
-
-## ⚡ Performance Perspective (Same CNN)
+### ⚡ Performance Perspective (Same CNN)
 
 | Metric | Cube.AI (CNN) | CMSIS-NN (CNN) |
 |------|--------------|----------------|
@@ -884,113 +679,62 @@ This ensures a **fair comparison** across identical model structure.
 | RAM Usage | ~21.5 KB | ~21.5 KB |
 | Optimization Level | Tool-driven | Manual (baseline implementation) |
 
----
-
-## 📊 CMSIS-NN Measured Performance
-
-Benchmark setup:
-
-- 2 warmup runs + 10 measured runs  
-- Cycle-level measurement using DWT counter  
-- Full inference pipeline measured:
-  Conv → ReLU → Pool → Conv → ReLU → Pool → Flatten → FC1 → ReLU → FC2  
-
-### Results (STM32 Cortex-M4)
-
-- Average Cycles: ~103,855,240  
-- Average Latency: ~865.46 ms  
-
----
-
-## ⚠️ Key Observation
-
+📌 Result:
 👉 CMSIS-NN implementation is **~6.8× slower than Cube.AI** for the same CNN model  
 
 ---
+### 🧠 Trade-off
 
-## 🧠 Why CMSIS-NN is Slower (In This Implementation)
-
-Although CMSIS-NN provides optimized kernels:
-
-- Only convolution layers use CMSIS optimized functions  
-- Pooling and ReLU are implemented manually  
-- Fully connected layers use custom `linear_s8` implementation  
-- No operator fusion (Conv + ReLU + Pool are separate)  
-- Memory access patterns are not optimized  
-
-👉 Result:
-
-The system behaves like a **correct reference pipeline**,  
-not a fully optimized CMSIS implementation.
+| Cube.AI | CMSIS-NN |
+|--------|----------|
+| Fast | Flexible |
+| Black-box | Transparent |
+| Easy | Complex |
 
 ---
 
-## 🔥 Real Debugging Insight (From This Project)
+### 🎯 Accuracy & Validation
+#### 📊 Training Accuracy
 
-Using CMSIS-NN enabled identification of issues that are hard to detect in tool-driven pipelines:
+- CNN validation accuracy: ~99% (MNIST)
 
-- FC1 dimensional mismatch (800 vs 1568)  
-- Flatten layout mismatch  
-- Quantization scaling inconsistencies  
+#### 🔁 Cross-Platform Output Consistency
 
-👉 These issues are difficult to diagnose using Cube.AI alone due to abstraction.
+To ensure deployment correctness, outputs were compared across:
 
----
+- PyTorch (baseline)
+- ONNX Runtime (CPU)
+- STM32 CMSIS-NN implementation
 
-## 🧠 Engineering Trade-offs
+#### ✅ Observations
 
-### Cube.AI
+- ONNX outputs closely match PyTorch outputs  
+- STM32 outputs match integer reference implementation  
+- Final predicted class matches PyTorch for tested samples  
 
-**Pros**
-- Fast deployment  
-- Automatically optimized execution  
-- Efficient memory handling  
-- Lower latency out-of-the-box  
+📌 Example:
 
-**Cons**
-- Limited visibility into internal execution  
-- Hard to debug layer-level issues  
-- Less control over quantization behavior  
+| Platform | Predicted Class |
+|---------|----------------|
+| PyTorch | 7 |
+| ONNX | 7 |
+| STM32 (CMSIS-NN) | 7 |
 
----
 
-### CMSIS-NN
+#### ⚠️ Quantization Impact
 
-**Pros**
-- Full control over:
-  - data flow  
-  - quantization  
-  - memory layout  
-- Enables detailed debugging  
-- Provides deeper understanding of inference pipeline  
+- INT8 quantization introduces minor numerical differences  
+- No classification mismatch observed in tested samples  
+- Full dataset accuracy evaluation on STM32 not performed  
 
-**Cons**
-- High development effort  
-- Easy to introduce structural and scaling errors  
-- Performance depends heavily on manual optimization  
+#### 🧠 Key Insight
+
+> Deployment correctness was validated through **cross-platform consistency**,  
+> not full dataset accuracy evaluation on device
 
 ---
 
-## 🧠 Final Takeaway
-
-> Cube.AI is optimized for **deployment and performance out-of-the-box**  
-> CMSIS-NN is designed for **control, debugging, and understanding**
-
----
-
-## 🎯 When to Use What
-
-| Scenario | Recommended Approach |
-|---------|---------------------|
-| Quick deployment | Cube.AI |
-| Production systems | Cube.AI |
-| Debugging model behavior | CMSIS-NN |
-| Custom architecture control | CMSIS-NN |
-| Learning / research | CMSIS-NN |
-
----
-
-## 🚀 Final Insight
+### 🚀 Final Insight
 
 > CMSIS-NN is not a faster alternative by default  
 
@@ -1005,79 +749,19 @@ Using CMSIS-NN enabled identification of issues that are hard to detect in tool-
 
 ---
 
-## 🧠 Performance Reality (This Work)
+# 📊 Final System Comparison
 
-| Observation | Result |
-|------------|-------|
-| CMSIS vs Cube.AI | ~6.8× slower |
-| Implementation type | Baseline (non-optimized) |
-| Correctness | ✅ Verified |
-| Optimization stage | Not yet performed |
-
-👉 This represents a **baseline CMSIS implementation**,  
-not an optimized one.
-
----
-## 🔥 Phase 3 Key Achievement
-> End-to-end pipeline validated:  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PyTorch → ONNX → Cube.AI → STM32 → UART → System Analysis
-
---- 
-
-## 🎯 Model Accuracy & Validation
-
-### 📊 Training Accuracy (Phase 1)
-
-- CNN validation accuracy: ~99% (MNIST)
-
+| Stage | Latency |
+|------|--------|
+| PyTorch CNN | ~0.73 ms |
+| ONNX CNN | ~0.09 ms |
+| STM32 Cube.AI | ~125 ms |
+| STM32 CMSIS | ~865 ms |
+| Transformer STM32 | ❌ Not deployable |
 ---
 
-### 🔁 Cross-Platform Output Consistency
 
-To ensure deployment correctness, outputs were compared across:
 
-- PyTorch (baseline)
-- ONNX Runtime (CPU)
-- STM32 CMSIS-NN implementation
-
----
-
-### ✅ Observations
-
-- ONNX outputs closely match PyTorch outputs  
-- STM32 outputs match integer reference implementation  
-- Final predicted class matches PyTorch for tested samples  
-
-📌 Example:
-
-| Platform | Predicted Class |
-|---------|----------------|
-| PyTorch | 7 |
-| ONNX | 7 |
-| STM32 (CMSIS-NN) | 7 |
-
----
-
-### ⚠️ Quantization Impact
-
-- INT8 quantization introduces minor numerical differences  
-- No classification mismatch observed in tested samples  
-- Full dataset accuracy evaluation on STM32 not performed  
-
----
-
-### 🧠 Key Insight
-
-> Deployment correctness was validated through **cross-platform consistency**,  
-> not full dataset accuracy evaluation on device
-
----
-
-### 🚀 Conclusion
-
-- Model retains functional correctness after deployment  
-- Pipeline verified from training → ONNX → embedded inference  
-- Accuracy degradation (if any) is negligible for tested cases
 
 # 🗂️ Repository Structure
 
